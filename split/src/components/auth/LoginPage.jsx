@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Container,
@@ -9,59 +9,73 @@ import {
   InputAdornment,
   Alert,
   Grid,
-} from '@mui/material';
-import { Visibility, VisibilityOff, MonetizationOn } from '@mui/icons-material';
+} from "@mui/material";
+import { Visibility, VisibilityOff, MonetizationOn } from "@mui/icons-material";
 
 const avatarOptions = [
-  '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
-  '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔',
+  "🐶",
+  "🐱",
+  "🐭",
+  "🐹",
+  "🐰",
+  "🦊",
+  "🐻",
+  "🐼",
+  "🐨",
+  "🐯",
+  "🦁",
+  "🐮",
+  "🐷",
+  "🐸",
+  "🐵",
+  "🐔",
 ];
 
 export default function LoginPage({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    wallet: '',
-    avatar: '🐶'
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    wallet: "$ilp.interledger-test.dev/f5b29886", //THIS IS NOT A REAL WALLET OK?????????🙈
+    avatar: "🐶",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    setError('');
+    setError("");
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!formData.email || !formData.password) {
-      setError('Por favor completa todos los campos');
+      setError("Por favor completa todos los campos");
       return;
     }
 
     if (!isLogin) {
       if (!formData.wallet) {
-        setError('Por favor ingresa tu dirección de wallet');
+        setError("Por favor ingresa tu dirección de wallet");
         return;
       }
       if (formData.password !== formData.confirmPassword) {
-        setError('Las contraseñas no coinciden');
+        setError("Las contraseñas no coinciden");
         return;
       }
     }
 
     const userData = {
       email: formData.email,
-      name: formData.name || formData.email.split('@')[0],
+      name: formData.name || formData.email.split("@")[0],
       wallet: formData.wallet,
       avatar: formData.avatar,
     };
@@ -73,78 +87,78 @@ export default function LoginPage({ onLogin }) {
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
-    setError('');
+    setError("");
     setFormData({
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      wallet: '',
-      avatar: '🐶'
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      wallet: "",
+      avatar: "🐶",
     });
   };
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: '#2a2a2a',
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "#2a2a2a",
         py: 4,
       }}
     >
       <Container maxWidth="sm">
         <Box
           sx={{
-            bgcolor: 'white',
+            bgcolor: "white",
             borderRadius: 3,
             p: 6,
-            position: 'relative',
-            maxHeight: '90vh',
-            overflowY: 'auto',
+            position: "relative",
+            maxHeight: "90vh",
+            overflowY: "auto",
           }}
         >
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              mb: 4
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              mb: 4,
             }}
           >
             <Box
               sx={{
                 width: 60,
                 height: 60,
-                bgcolor: '#f5f5f5',
+                bgcolor: "#f5f5f5",
                 borderRadius: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 mb: 3,
-                transform: 'rotate(-15deg)'
+                transform: "rotate(-15deg)",
               }}
             >
-              <MonetizationOn sx={{ fontSize: 40, color: '#ffd700' }} />
+              <MonetizationOn sx={{ fontSize: 40, color: "#ffd700" }} />
             </Box>
 
             <Box
               sx={{
                 width: 200,
                 height: 200,
-                bgcolor: '#f4d56f',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                bgcolor: "#f4d56f",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 mb: 4,
-                overflow: 'hidden'
+                overflow: "hidden",
               }}
             >
-              <Typography sx={{ fontSize: '8rem' }}>
-                {!isLogin ? formData.avatar : '👨🏻‍💻'}
+              <Typography sx={{ fontSize: "8rem" }}>
+                {!isLogin ? formData.avatar : "👨🏻‍💻"}
               </Typography>
             </Box>
           </Box>
@@ -166,12 +180,12 @@ export default function LoginPage({ onLogin }) {
                   onChange={handleChange}
                   sx={{
                     mb: 2,
-                    '& .MuiOutlinedInput-root': {
+                    "& .MuiOutlinedInput-root": {
                       borderRadius: 3,
-                      bgcolor: '#f5f5f5',
-                      '& fieldset': { border: 'none' },
-                      height: '56px'
-                    }
+                      bgcolor: "#f5f5f5",
+                      "& fieldset": { border: "none" },
+                      height: "56px",
+                    },
                   }}
                 />
 
@@ -183,12 +197,12 @@ export default function LoginPage({ onLogin }) {
                   onChange={handleChange}
                   sx={{
                     mb: 2,
-                    '& .MuiOutlinedInput-root': {
+                    "& .MuiOutlinedInput-root": {
                       borderRadius: 3,
-                      bgcolor: '#f5f5f5',
-                      '& fieldset': { border: 'none' },
-                      height: '56px'
-                    }
+                      bgcolor: "#f5f5f5",
+                      "& fieldset": { border: "none" },
+                      height: "56px",
+                    },
                   }}
                 />
 
@@ -197,32 +211,47 @@ export default function LoginPage({ onLogin }) {
                   sx={{
                     mb: 1,
                     fontWeight: 600,
-                    color: '#666',
+                    color: "#666",
                   }}
                 >
                   Elige tu avatar
                 </Typography>
-
-                <Grid container spacing={1} sx={{ mb: 3 }}>
+                <Grid
+                  container
+                  spacing={1}
+                  justifyContent="center"
+                  sx={{ mb: 3 }}
+                >
                   {avatarOptions.map((avatar) => (
-                    <Grid item xs={3} key={avatar}>
+                    <Grid item xs={3} sm={2} md={1.5} key={avatar}>
                       <Box
-                        onClick={() => setFormData(prev => ({ ...prev, avatar }))}
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, avatar }))
+                        }
                         sx={{
-                          bgcolor: formData.avatar === avatar ? '#ffd700' : '#f5f5f5',
+                          bgcolor:
+                            formData.avatar === avatar ? "#ffd700" : "#f5f5f5",
                           borderRadius: 2,
                           p: 1.5,
-                          textAlign: 'center',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          border: formData.avatar === avatar ? '2px solid #000' : '2px solid transparent',
-                          '&:hover': {
-                            bgcolor: formData.avatar === avatar ? '#ffd700' : '#e8e8e8',
-                            transform: 'scale(1.05)',
+                          textAlign: "center",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          border:
+                            formData.avatar === avatar
+                              ? "2px solid #000"
+                              : "2px solid transparent",
+                          "&:hover": {
+                            bgcolor:
+                              formData.avatar === avatar
+                                ? "#ffd700"
+                                : "#e8e8e8",
+                            transform: "scale(1.05)",
                           },
                         }}
                       >
-                        <Typography sx={{ fontSize: '2rem' }}>{avatar}</Typography>
+                        <Typography sx={{ fontSize: "2rem" }}>
+                          {avatar}
+                        </Typography>
                       </Box>
                     </Grid>
                   ))}
@@ -239,12 +268,12 @@ export default function LoginPage({ onLogin }) {
               onChange={handleChange}
               sx={{
                 mb: 2,
-                '& .MuiOutlinedInput-root': {
+                "& .MuiOutlinedInput-root": {
                   borderRadius: 3,
-                  bgcolor: '#f5f5f5',
-                  '& fieldset': { border: 'none' },
-                  height: '56px'
-                }
+                  bgcolor: "#f5f5f5",
+                  "& fieldset": { border: "none" },
+                  height: "56px",
+                },
               }}
             />
 
@@ -252,17 +281,17 @@ export default function LoginPage({ onLogin }) {
               fullWidth
               placeholder="Contraseña"
               name="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               value={formData.password}
               onChange={handleChange}
               sx={{
                 mb: !isLogin ? 2 : 4,
-                '& .MuiOutlinedInput-root': {
+                "& .MuiOutlinedInput-root": {
                   borderRadius: 3,
-                  bgcolor: '#f5f5f5',
-                  '& fieldset': { border: 'none' },
-                  height: '56px'
-                }
+                  bgcolor: "#f5f5f5",
+                  "& fieldset": { border: "none" },
+                  height: "56px",
+                },
               }}
               InputProps={{
                 endAdornment: (
@@ -275,7 +304,7 @@ export default function LoginPage({ onLogin }) {
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
-                )
+                ),
               }}
             />
 
@@ -284,17 +313,17 @@ export default function LoginPage({ onLogin }) {
                 fullWidth
                 placeholder="Confirmar contraseña"
                 name="confirmPassword"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 sx={{
                   mb: 4,
-                  '& .MuiOutlinedInput-root': {
+                  "& .MuiOutlinedInput-root": {
                     borderRadius: 3,
-                    bgcolor: '#f5f5f5',
-                    '& fieldset': { border: 'none' },
-                    height: '56px'
-                  }
+                    bgcolor: "#f5f5f5",
+                    "& fieldset": { border: "none" },
+                    height: "56px",
+                  },
                 }}
               />
             )}
@@ -308,19 +337,19 @@ export default function LoginPage({ onLogin }) {
                 mb: 2,
                 py: 2,
                 borderRadius: 10,
-                textTransform: 'none',
-                fontSize: '1rem',
+                textTransform: "none",
+                fontSize: "1rem",
                 fontWeight: 500,
-                bgcolor: '#e0e0e0',
-                color: '#666',
-                boxShadow: 'none',
-                '&:hover': {
-                  bgcolor: '#d5d5d5',
-                  boxShadow: 'none'
-                }
+                bgcolor: "#e0e0e0",
+                color: "#666",
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: "#d5d5d5",
+                  boxShadow: "none",
+                },
               }}
             >
-              {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+              {isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
             </Button>
 
             <Button
@@ -331,21 +360,21 @@ export default function LoginPage({ onLogin }) {
               sx={{
                 py: 2,
                 borderRadius: 10,
-                textTransform: 'none',
-                fontSize: '1rem',
+                textTransform: "none",
+                fontSize: "1rem",
                 fontWeight: 500,
-                bgcolor: '#e0e0e0',
-                color: '#666',
-                border: 'none',
-                boxShadow: 'none',
-                '&:hover': {
-                  bgcolor: '#d5d5d5',
-                  border: 'none',
-                  boxShadow: 'none'
-                }
+                bgcolor: "#e0e0e0",
+                color: "#666",
+                border: "none",
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: "#d5d5d5",
+                  border: "none",
+                  boxShadow: "none",
+                },
               }}
             >
-              {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
+              {isLogin ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?"}
             </Button>
           </Box>
         </Box>

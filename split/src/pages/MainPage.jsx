@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Container,
@@ -6,24 +6,21 @@ import {
   Card,
   CardContent,
   Fab,
-  BottomNavigation,
-  BottomNavigationAction,
   Button,
   Chip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
-  Group as GroupIcon,
-  Person as PersonIcon,
   MonetizationOn,
   Check as CheckIcon,
   Close as CloseIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
+import AppBottomNavigation from "../components/AppBottomNavigation";
 
-export default function MainPage({ 
-  grupos = [], 
-  solicitudes = [], 
-  onNavigateToCreate, 
+export default function MainPage({
+  grupos = [],
+  solicitudes = [],
+  onNavigateToCreate,
   onNavigateToProfile,
   onNavigateToGroup,
   onAcceptRequest,
@@ -45,7 +42,7 @@ export default function MainPage({
   };
 
   const handleGroupClick = (grupo) => {
-    console.log('Navegando a grupo:', grupo);
+    console.log("Navegando a grupo:", grupo);
     if (onNavigateToGroup) {
       onNavigateToGroup(grupo);
     }
@@ -66,46 +63,59 @@ export default function MainPage({
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        bgcolor: '#2a2a2a',
-        pb: 8,
+        minHeight: "100vh",
+        bgcolor: "#2a2a2a",
+        pb: 10,
       }}
     >
       <Container maxWidth="sm" sx={{ px: 3, pt: 3 }}>
         <Box
           sx={{
-            bgcolor: 'white',
+            bgcolor: "white",
             borderRadius: 3,
             p: 3,
-            minHeight: 'calc(100vh - 180px)',
-            position: 'relative',
+            minHeight: "calc(100vh - 180px)",
+            position: "relative",
           }}
         >
           {/* Money Icon */}
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'center',
+              display: "flex",
+              justifyContent: "center",
               mb: 3,
             }}
           >
-            <MonetizationOn
+            <Box
               sx={{
-                fontSize: 60,
-                color: '#ffd700',
+                width: 80,
+                height: 80,
+                bgcolor: "#f4d56f",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
               }}
-            />
+            >
+              <MonetizationOn
+                sx={{
+                  fontSize: 50,
+                  color: "#000",
+                }}
+              />
+            </Box>
           </Box>
 
           {/* Solicitudes */}
           {solicitudes && solicitudes.length > 0 && (
             <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <Typography
-                  variant="h6"
+                  variant="h5"
                   sx={{
-                    fontWeight: 600,
-                    color: '#000',
+                    fontWeight: 700,
+                    color: "#000",
                   }}
                 >
                   Solicitudes
@@ -114,9 +124,10 @@ export default function MainPage({
                   label={solicitudes.length}
                   size="small"
                   sx={{
-                    ml: 1,
-                    bgcolor: '#ffd700',
-                    fontWeight: 600,
+                    ml: 2,
+                    bgcolor: "#ffd700",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
                   }}
                 />
               </Box>
@@ -126,41 +137,52 @@ export default function MainPage({
                   key={solicitud.id}
                   sx={{
                     mb: 2,
-                    bgcolor: '#fff3cd',
+                    bgcolor: "#fff9e6",
                     borderRadius: 3,
-                    boxShadow: 'none',
-                    border: '1px solid #ffd700',
+                    boxShadow: "none",
+                    border: "2px solid #ffd700",
                   }}
                 >
-                  <CardContent sx={{ pb: 2, '&:last-child': { pb: 2 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Typography sx={{ fontSize: '2rem', mr: 2 }}>
-                        {solicitud.grupoEmoji}
-                      </Typography>
+                  <CardContent sx={{ pb: 2, "&:last-child": { pb: 2 } }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Box
+                        sx={{
+                          width: 50,
+                          height: 50,
+                          bgcolor: "#f4d56f",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          mr: 2,
+                        }}
+                      >
+                        <Typography sx={{ fontSize: "1.8rem" }}>
+                          {solicitud.grupoEmoji}
+                        </Typography>
+                      </Box>
                       <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{ fontWeight: 600 }}
-                        >
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
                           {solicitud.grupoNombre}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: '#666' }}>
+                        <Typography variant="body2" sx={{ color: "#666" }}>
                           {solicitud.invitadoPor} te ha agregado
                         </Typography>
                       </Box>
                     </Box>
 
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ display: "flex", gap: 1 }}>
                       <Button
                         fullWidth
                         variant="contained"
                         startIcon={<CheckIcon />}
                         onClick={() => handleAccept(solicitud)}
                         sx={{
-                          bgcolor: '#4caf50',
-                          '&:hover': { bgcolor: '#45a049' },
-                          textTransform: 'none',
+                          bgcolor: "#4caf50",
+                          "&:hover": { bgcolor: "#45a049" },
+                          textTransform: "none",
                           borderRadius: 2,
+                          fontWeight: 600,
                         }}
                       >
                         Aceptar
@@ -171,14 +193,15 @@ export default function MainPage({
                         startIcon={<CloseIcon />}
                         onClick={() => handleReject(solicitud)}
                         sx={{
-                          borderColor: '#f44336',
-                          color: '#f44336',
-                          '&:hover': {
-                            borderColor: '#d32f2f',
-                            bgcolor: '#ffebee',
+                          borderColor: "#f44336",
+                          color: "#f44336",
+                          "&:hover": {
+                            borderColor: "#d32f2f",
+                            bgcolor: "#ffebee",
                           },
-                          textTransform: 'none',
+                          textTransform: "none",
                           borderRadius: 2,
+                          fontWeight: 600,
                         }}
                       >
                         Rechazar
@@ -192,14 +215,14 @@ export default function MainPage({
 
           {/* Título Grupos */}
           <Typography
-            variant="h4"
+            variant="h5"
             sx={{
-              fontWeight: 600,
+              fontWeight: 700,
               mb: 3,
-              color: '#000',
+              color: "#000",
             }}
           >
-            Grupos
+            Mis Grupos
           </Typography>
 
           {/* Lista de Grupos */}
@@ -211,40 +234,57 @@ export default function MainPage({
                   onClick={() => handleGroupClick(grupo)}
                   sx={{
                     mb: 2,
-                    bgcolor: '#e0e0e0',
+                    bgcolor: "#fafafa",
                     borderRadius: 3,
-                    boxShadow: 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      bgcolor: '#d5d5d5',
-                      transform: 'translateY(-2px)',
+                    boxShadow: "none",
+                    border: "1px solid #e0e0e0",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      bgcolor: "#f5f5f5",
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                     },
                   }}
                 >
                   <CardContent
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
+                      display: "flex",
+                      alignItems: "center",
                       py: 2,
                     }}
                   >
-                    <Typography sx={{ fontSize: '2.5rem', mr: 2 }}>
-                      {grupo.emoji}
-                    </Typography>
+                    <Box
+                      sx={{
+                        width: 60,
+                        height: 60,
+                        bgcolor: "#f4d56f",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mr: 2,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Typography sx={{ fontSize: "2rem" }}>
+                        {grupo.emoji}
+                      </Typography>
+                    </Box>
                     <Box sx={{ flex: 1 }}>
                       <Typography
                         variant="h6"
                         sx={{
-                          fontWeight: 500,
-                          color: '#666',
+                          fontWeight: 600,
+                          color: "#000",
                         }}
                       >
                         {grupo.nombre}
                       </Typography>
                       {grupo.miembros && (
-                        <Typography variant="body2" sx={{ color: '#999' }}>
-                          {grupo.miembros.length} miembro{grupo.miembros.length !== 1 ? 's' : ''}
+                        <Typography variant="body2" sx={{ color: "#666" }}>
+                          {grupo.miembros.length} miembro
+                          {grupo.miembros.length !== 1 ? "s" : ""}
                         </Typography>
                       )}
                     </Box>
@@ -255,15 +295,15 @@ export default function MainPage({
           ) : (
             <Box
               sx={{
-                textAlign: 'center',
-                py: 6,
+                textAlign: "center",
+                py: 8,
                 mb: 10,
               }}
             >
               <Typography
                 variant="h6"
                 sx={{
-                  color: '#999',
+                  color: "#999",
                   mb: 1,
                 }}
               >
@@ -272,7 +312,7 @@ export default function MainPage({
               <Typography
                 variant="body2"
                 sx={{
-                  color: '#aaa',
+                  color: "#aaa",
                 }}
               >
                 Toca el botón + para crear tu primer grupo
@@ -286,20 +326,19 @@ export default function MainPage({
             aria-label="add"
             onClick={handleAddGroup}
             sx={{
-              position: 'fixed',
+              position: "fixed",
               bottom: 100,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              bgcolor: 'white',
-              color: '#000',
-              border: '2px solid #000',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              right: 30,
+              bgcolor: "#ffd700",
+              color: "#000",
+              boxShadow: "0 4px 16px rgba(255,215,0,0.4)",
               width: 64,
               height: 64,
-              zIndex: 1000,
-              '&:hover': {
-                bgcolor: '#f5f5f5',
+              "&:hover": {
+                bgcolor: "#ffed4e",
+                transform: "scale(1.1)",
               },
+              transition: "all 0.3s ease",
             }}
           >
             <AddIcon sx={{ fontSize: 32 }} />
@@ -308,36 +347,10 @@ export default function MainPage({
       </Container>
 
       {/* Bottom Navigation */}
-      <BottomNavigation
+      <AppBottomNavigation
         value={navigationValue}
         onChange={handleNavigationChange}
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          bgcolor: '#d5d5d5',
-          borderTop: '1px solid #ccc',
-          height: 70,
-          '& .MuiBottomNavigationAction-root': {
-            color: '#666',
-            minWidth: 'auto',
-            padding: '6px 12px',
-          },
-          '& .Mui-selected': {
-            color: '#000',
-          },
-        }}
-      >
-        <BottomNavigationAction
-          label="Grupos"
-          icon={<GroupIcon sx={{ fontSize: 28 }} />}
-        />
-        <BottomNavigationAction
-          label="Perfil"
-          icon={<PersonIcon sx={{ fontSize: 28 }} />}
-        />
-      </BottomNavigation>
+      />
     </Box>
   );
 }

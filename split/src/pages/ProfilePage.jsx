@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Box,
   Container,
@@ -10,20 +10,17 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
-  BottomNavigation,
-  BottomNavigationAction,
   Card,
   CardContent,
-} from '@mui/material';
+} from "@mui/material";
 import {
-  Group as GroupIcon,
-  Person as PersonIcon,
   Settings as SettingsIcon,
   Help as HelpIcon,
   Logout as LogoutIcon,
   MonetizationOn,
   AccountBalanceWallet as WalletIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
+import AppBottomNavigation from "../components/AppBottomNavigation";
 
 export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
   const [navigationValue, setNavigationValue] = React.useState(1);
@@ -36,120 +33,162 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
   };
 
   const menuItems = [
-    { icon: <SettingsIcon />, text: 'Configuración', action: () => console.log('Configuración') },
-    { icon: <HelpIcon />, text: 'Ayuda', action: () => console.log('Ayuda') },
+    {
+      icon: <SettingsIcon />,
+      text: "Configuración",
+      action: () => console.log("Configuración"),
+    },
+    { icon: <HelpIcon />, text: "Ayuda", action: () => console.log("Ayuda") },
   ];
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        bgcolor: '#2a2a2a',
-        pb: 8,
+        minHeight: "100vh",
+        bgcolor: "#2a2a2a",
+        pb: 10,
       }}
     >
       <Container maxWidth="sm" sx={{ px: 3, pt: 3 }}>
         <Box
           sx={{
-            bgcolor: 'white',
+            bgcolor: "white",
             borderRadius: 3,
             p: 4,
-            minHeight: 'calc(100vh - 180px)',
+            minHeight: "calc(100vh - 180px)",
           }}
         >
           {/* Money Icon */}
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'center',
+              display: "flex",
+              justifyContent: "center",
               mb: 3,
             }}
           >
-            <MonetizationOn
+            <Box
               sx={{
-                fontSize: 60,
-                color: '#ffd700',
+                width: 80,
+                height: 80,
+                bgcolor: "#f4d56f",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
               }}
-            />
+            >
+              <MonetizationOn
+                sx={{
+                  fontSize: 50,
+                  color: "#000",
+                }}
+              />
+            </Box>
           </Box>
 
           {/* Avatar y nombre */}
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
               mb: 4,
             }}
           >
-            <Avatar
+            <Box
               sx={{
                 width: 120,
                 height: 120,
-                bgcolor: '#f4d56f',
-                fontSize: '4rem',
+                bgcolor: "#f4d56f",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 mb: 2,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
               }}
             >
-              {user?.avatar || '👤'}
-            </Avatar>
+              <Typography sx={{ fontSize: "4rem" }}>
+                {user?.avatar || "👤"}
+              </Typography>
+            </Box>
             <Typography
               variant="h5"
               sx={{
-                fontWeight: 600,
+                fontWeight: 700,
                 mb: 0.5,
               }}
             >
-              {user?.name || 'Usuario'}
+              {user?.name || "Usuario"}
             </Typography>
             <Typography
               variant="body2"
               sx={{
-                color: '#666',
+                color: "#666",
                 mb: 2,
               }}
             >
-              {user?.email || 'email@ejemplo.com'}
+              {user?.email || "email@ejemplo.com"}
             </Typography>
 
             {/* Wallet Card */}
             {user?.wallet && (
               <Card
                 sx={{
-                  width: '100%',
-                  bgcolor: '#f5f5f5',
+                  width: "100%",
+                  bgcolor: "#fafafa",
                   borderRadius: 3,
-                  boxShadow: 'none',
+                  boxShadow: "none",
+                  border: "1px solid #e0e0e0",
                   mt: 2,
                 }}
               >
                 <CardContent sx={{ py: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <WalletIcon sx={{ color: '#ffd700', mr: 1 }} />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      Mi Wallet
-                    </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: "#f4d56f",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        mr: 2,
+                      }}
+                    >
+                      <WalletIcon sx={{ color: "#000" }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ fontWeight: 700, color: "#000" }}
+                      >
+                        Mi Wallet
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "#666",
+                          fontFamily: "monospace",
+                          fontSize: "0.85rem",
+                          wordBreak: "break-all",
+                        }}
+                      >
+                        {user.wallet.substring(26, 49)}...
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#666',
-                      fontFamily: 'monospace',
-                      fontSize: '0.85rem',
-                      wordBreak: 'break-all',
-                    }}
-                  >
-                    {user.wallet}
-                  </Typography>
                 </CardContent>
               </Card>
             )}
           </Box>
 
-          <Divider sx={{ mb: 2 }} />
+          <Divider sx={{ mb: 3 }} />
 
           {/* Menú de opciones */}
-          <List>
+          <List sx={{ mb: 3 }}>
             {menuItems.map((item, index) => (
               <ListItem
                 key={index}
@@ -158,19 +197,36 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
                 sx={{
                   borderRadius: 2,
                   mb: 1,
-                  '&:hover': {
-                    bgcolor: '#f5f5f5',
+                  bgcolor: "#fafafa",
+                  border: "1px solid #e0e0e0",
+                  "&:hover": {
+                    bgcolor: "#f5f5f5",
+                    transform: "translateY(-2px)",
                   },
+                  transition: "all 0.2s",
                 }}
               >
-                <ListItemIcon sx={{ color: '#666' }}>
-                  {item.icon}
+                <ListItemIcon>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: "#f4d56f",
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {React.cloneElement(item.icon, { sx: { color: "#000" } })}
+                  </Box>
                 </ListItemIcon>
                 <ListItemText
                   primary={item.text}
                   sx={{
-                    '& .MuiTypography-root': {
-                      fontWeight: 500,
+                    "& .MuiTypography-root": {
+                      fontWeight: 600,
+                      color: "#000",
                     },
                   }}
                 />
@@ -178,7 +234,7 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
             ))}
           </List>
 
-          <Divider sx={{ my: 2 }} />
+          <Divider sx={{ mb: 3 }} />
 
           {/* Botón de cerrar sesión */}
           <Button
@@ -187,16 +243,17 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
             onClick={onLogout}
             sx={{
               py: 1.5,
-              borderRadius: 10,
-              textTransform: 'none',
-              fontSize: '1rem',
-              fontWeight: 500,
-              bgcolor: '#e0e0e0',
-              color: '#d32f2f',
-              boxShadow: 'none',
-              '&:hover': {
-                bgcolor: '#d5d5d5',
-                boxShadow: 'none',
+              borderRadius: 3,
+              textTransform: "none",
+              fontSize: "1rem",
+              fontWeight: 600,
+              bgcolor: "#ffebee",
+              color: "#d32f2f",
+              border: "1px solid #d32f2f",
+              boxShadow: "none",
+              "&:hover": {
+                bgcolor: "#ffcdd2",
+                boxShadow: "none",
               },
             }}
           >
@@ -206,36 +263,10 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
       </Container>
 
       {/* Bottom Navigation */}
-      <BottomNavigation
+      <AppBottomNavigation
         value={navigationValue}
         onChange={handleNavigationChange}
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          bgcolor: '#d5d5d5',
-          borderTop: '1px solid #ccc',
-          height: 70,
-          '& .MuiBottomNavigationAction-root': {
-            color: '#666',
-            minWidth: 'auto',
-            padding: '6px 12px',
-          },
-          '& .Mui-selected': {
-            color: '#000',
-          },
-        }}
-      >
-        <BottomNavigationAction
-          label="Grupos"
-          icon={<GroupIcon sx={{ fontSize: 28 }} />}
-        />
-        <BottomNavigationAction
-          label="Perfil"
-          icon={<PersonIcon sx={{ fontSize: 28 }} />}
-        />
-      </BottomNavigation>
+      />
     </Box>
   );
 }

@@ -13,6 +13,8 @@ import {
   Button,
   Modal,
   Divider,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -21,6 +23,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
 } from '@mui/icons-material';
+import AppBottomNavigation from '../components/AppBottomNavigation';
 
 function TabPanel({ children, value, index }) {
   return (
@@ -34,19 +37,34 @@ export default function GroupDetailPage({
   grupo, 
   onBack, 
   onAddService,
+  onNavigateToProfile,
   userWallet = 'wallet-address-1234',
-  userBalance = 150.50,
+  userBalance: initialBalance = 150.50,
 }) {
   const [tabValue, setTabValue] = useState(0);
   const [openPayModal, setOpenPayModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
+  const [userBalance, setUserBalance] = useState(initialBalance);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const [navigationValue, setNavigationValue] = useState(null);
+
+  const handleNavigationChange = (event, newValue) => {
+    setNavigationValue(newValue);
+    if (newValue === 1 && onNavigateToProfile) {
+      onNavigateToProfile();
+    } else if (newValue === 0) {
+      onBack();
+    }
+  };
 
   // Calcular deudas por miembro
   const calcularDeudas = () => {
     if (!grupo.servicios || grupo.servicios.length === 0) return [];
     
     const miembrosConfirmados = grupo.miembros?.filter(m => m.estado === 'confirmado') || [];
-    const totalMiembros = miembrosConfirmados.length + 1; // +1 por el creador
+    const totalMiembros = miembrosConfirmados.length + 1;
     
     return grupo.servicios.map(servicio => ({
       ...servicio,
@@ -60,18 +78,63 @@ export default function GroupDetailPage({
   const handlePay = (servicio = null) => {
     setSelectedPayment(servicio);
     setOpenPayModal(true);
+    setPaymentSuccess(false);
+    setPaymentError('');
   };
 
-  const handleConfirmPayment = () => {
-    // Aquí iría la lógica de pago
-    console.log('Procesando pago:', selectedPayment);
-    setOpenPayModal(false);
-    setSelectedPayment(null);
+  const handleConfirmPayment = async () => {
+    setIsProcessing(true);
+    setPaymentError('');
+
+    const montoAPagar = selectedPayment ? selectedPayment.montoPorPersona : totalAPagar;
+    
+    try {
+      // Simular llamada al backend
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Verificar saldo suficiente
+      if (userBalance < montoAPagar) {
+        setPaymentError('Saldo insuficiente');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Actualizar balance
+      const nuevoBalance = userBalance - montoAPagar;
+      setUserBalance(nuevoBalance);
+      
+      // Aquí iría la llamada al backend real
+      // await paymentAPI.createPayment({
+      //   groupId: grupo.id,
+      //   serviceId: selectedPayment?.id,
+      //   amount: montoAPagar,
+      //   walletAddress: userWallet,
+      // });
+
+      setPaymentSuccess(true);
+      
+      // Cerrar modal después de 2 segundos
+      setTimeout(() => {
+        setOpenPayModal(false);
+        setSelectedPayment(null);
+        setPaymentSuccess(false);
+      }, 2000);
+
+    } catch (error) {
+      setPaymentError('Error al procesar el pago. Intenta de nuevo.');
+      console.error('Error en pago:', error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleCloseModal = () => {
-    setOpenPayModal(false);
-    setSelectedPayment(null);
+    if (!isProcessing) {
+      setOpenPayModal(false);
+      setSelectedPayment(null);
+      setPaymentSuccess(false);
+      setPaymentError('');
+    }
   };
 
   const montoAPagar = selectedPayment ? selectedPayment.montoPorPersona : totalAPagar;
@@ -83,7 +146,7 @@ export default function GroupDetailPage({
       sx={{
         minHeight: '100vh',
         bgcolor: '#2a2a2a',
-        pb: 3,
+        pb: 10,
       }}
     >
       {/* Header */}
@@ -100,12 +163,25 @@ export default function GroupDetailPage({
         <IconButton
           onClick={onBack}
           sx={{
-            color: '#888',
-            mr: 2,
+            color: '#fff',
+            bgcolor: 'rgba(255,255,255,0.1)',
+            '&:hover': {
+              bgcolor: 'rgba(255,255,255,0.2)',
+            },
           }}
         >
           <ArrowBack />
         </IconButton>
+        <Typography
+          variant="h6"
+          sx={{
+            color: '#fff',
+            ml: 2,
+            fontWeight: 500,
+          }}
+        >
+          Detalle del Grupo
+        </Typography>
       </Box>
 
       {/* Main Content */}
@@ -115,7 +191,7 @@ export default function GroupDetailPage({
             bgcolor: 'white',
             borderRadius: 3,
             overflow: 'hidden',
-            minHeight: 'calc(100vh - 120px)',
+            minHeight: 'calc(100vh - 200px)',
           }}
         >
           {/* Header del grupo */}
@@ -126,9 +202,9 @@ export default function GroupDetailPage({
               alignItems: 'center',
               pt: 4,
               pb: 2,
+              bgcolor: '#fafafa',
             }}
           >
-            {/* App Icon */}
             <MonetizationOn
               sx={{
                 fontSize: 40,
@@ -137,7 +213,6 @@ export default function GroupDetailPage({
               }}
             />
 
-            {/* Group Icon */}
             <Box
               sx={{
                 width: 100,
@@ -148,6 +223,7 @@ export default function GroupDetailPage({
                 alignItems: 'center',
                 justifyContent: 'center',
                 mb: 2,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
               }}
             >
               <Typography sx={{ fontSize: '4rem' }}>
@@ -155,10 +231,29 @@ export default function GroupDetailPage({
               </Typography>
             </Box>
 
-            {/* Group Name */}
-            <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
               {grupo.nombre}
             </Typography>
+
+            {/* Balance Card */}
+            <Card
+              sx={{
+                mt: 2,
+                mx: 3,
+                width: 'calc(100% - 48px)',
+                bgcolor: '#f4d56f',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              }}
+            >
+              <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
+                <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>
+                  Tu balance
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: '#000' }}>
+                  ${userBalance.toFixed(2)}
+                </Typography>
+              </CardContent>
+            </Card>
           </Box>
 
           {/* Tabs */}
@@ -169,9 +264,19 @@ export default function GroupDetailPage({
             sx={{
               borderBottom: 1,
               borderColor: 'divider',
+              bgcolor: '#fafafa',
               '& .MuiTab-root': {
                 textTransform: 'none',
                 fontWeight: 500,
+                fontSize: '1rem',
+              },
+              '& .Mui-selected': {
+                color: '#000',
+                fontWeight: 600,
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#ffd700',
+                height: 3,
               },
             }}
           >
@@ -192,6 +297,7 @@ export default function GroupDetailPage({
                       bgcolor: '#f5f5f5',
                       borderRadius: 3,
                       boxShadow: 'none',
+                      border: '1px solid #e0e0e0',
                     }}
                   >
                     <CardContent>
@@ -204,6 +310,7 @@ export default function GroupDetailPage({
                           sx={{
                             bgcolor: '#ffd700',
                             fontWeight: 600,
+                            fontSize: '0.95rem',
                           }}
                         />
                       </Box>
@@ -227,14 +334,13 @@ export default function GroupDetailPage({
                 </Box>
               )}
 
-              {/* FAB para agregar servicio */}
               <Fab
                 color="primary"
                 aria-label="add"
                 onClick={onAddService}
                 sx={{
                   position: 'fixed',
-                  bottom: 30,
+                  bottom: 100,
                   right: 30,
                   bgcolor: 'white',
                   color: '#000',
@@ -267,6 +373,7 @@ export default function GroupDetailPage({
                           bgcolor: haPagado ? '#e8f5e9' : '#fff3cd',
                           borderRadius: 3,
                           boxShadow: 'none',
+                          border: `1px solid ${haPagado ? '#4caf50' : '#ffd700'}`,
                         }}
                       >
                         <CardContent>
@@ -297,7 +404,6 @@ export default function GroupDetailPage({
                 </>
               )}
 
-              {/* Miembros pendientes */}
               {grupo.miembros?.filter(m => m.estado === 'pendiente').length > 0 && (
                 <Box sx={{ mt: 3 }}>
                   <Typography variant="subtitle2" sx={{ color: '#999', mb: 2 }}>
@@ -397,6 +503,7 @@ export default function GroupDetailPage({
                       '&:hover': { bgcolor: '#ffed4e' },
                       textTransform: 'none',
                       borderRadius: 3,
+                      boxShadow: '0 4px 12px rgba(255,215,0,0.3)',
                     }}
                   >
                     Pagar Todo (${totalAPagar.toFixed(2)})
@@ -433,122 +540,150 @@ export default function GroupDetailPage({
             p: 4,
           }}
         >
-          <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-            Confirmar Pago
-          </Typography>
-
-          {/* Concepto */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
-              Concepto
-            </Typography>
-            <Typography variant="h6">
-              {selectedPayment ? selectedPayment.nombre : 'Todos los servicios'}
-            </Typography>
-          </Box>
-
-          <Divider sx={{ my: 2 }} />
-
-          {/* Balance actual */}
-          <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2" sx={{ color: '#666' }}>
-                Balance actual
+          {paymentSuccess ? (
+            <Box sx={{ textAlign: 'center' }}>
+              <CheckCircleIcon sx={{ fontSize: 80, color: '#4caf50', mb: 2 }} />
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#4caf50' }}>
+                ¡Pago Exitoso!
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                ${userBalance.toFixed(2)}
+              <Typography variant="body1" sx={{ mt: 2, color: '#666' }}>
+                Tu pago se ha procesado correctamente
               </Typography>
             </Box>
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="body2" sx={{ color: '#666' }}>
-                Monto a pagar
+          ) : (
+            <>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                Confirmar Pago
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                -${montoAPagar.toFixed(2)}
-              </Typography>
-            </Box>
 
-            <Divider sx={{ my: 1 }} />
+              {paymentError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {paymentError}
+                </Alert>
+              )}
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                Nuevo balance
-              </Typography>
-              <Typography 
-                variant="h6" 
-                sx={{ 
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
+                  Concepto
+                </Typography>
+                <Typography variant="h6">
+                  {selectedPayment ? selectedPayment.nombre : 'Todos los servicios'}
+                </Typography>
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#666' }}>
+                    Balance actual
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    ${userBalance.toFixed(2)}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#666' }}>
+                    Monto a pagar
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    -${montoAPagar.toFixed(2)}
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ my: 1 }} />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    Nuevo balance
+                  </Typography>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontWeight: 600,
+                      color: saldoInsuficiente ? '#f44336' : '#4caf50',
+                    }}
+                  >
+                    ${nuevoBalance.toFixed(2)}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={handleConfirmPayment}
+                disabled={saldoInsuficiente || isProcessing}
+                sx={{
+                  mb: 2,
+                  py: 1.5,
+                  bgcolor: '#000',
+                  '&:hover': { bgcolor: '#333' },
+                  '&:disabled': {
+                    bgcolor: '#e0e0e0',
+                    color: '#999',
+                  },
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  fontSize: '1rem',
                   fontWeight: 600,
-                  color: saldoInsuficiente ? '#f44336' : '#4caf50',
                 }}
               >
-                ${nuevoBalance.toFixed(2)}
-              </Typography>
-            </Box>
-          </Box>
+                {isProcessing ? (
+                  <CircularProgress size={24} sx={{ color: '#999' }} />
+                ) : (
+                  'PAGAR'
+                )}
+              </Button>
 
-          {/* Botones */}
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={handleConfirmPayment}
-            disabled={saldoInsuficiente}
-            sx={{
-              mb: 2,
-              py: 1.5,
-              bgcolor: '#000',
-              '&:hover': { bgcolor: '#333' },
-              '&:disabled': {
-                bgcolor: '#e0e0e0',
-                color: '#999',
-              },
-              textTransform: 'none',
-              borderRadius: 2,
-              fontSize: '1rem',
-              fontWeight: 600,
-            }}
-          >
-            PAGAR
-          </Button>
+              {saldoInsuficiente && (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  href="https://wallet.interledger-test.dev"
+                  target="_blank"
+                  sx={{
+                    mb: 1,
+                    py: 1.5,
+                    borderColor: '#ffd700',
+                    color: '#000',
+                    '&:hover': {
+                      borderColor: '#ffed4e',
+                      bgcolor: '#fff9e6',
+                    },
+                    textTransform: 'none',
+                    borderRadius: 2,
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Depositar Fondos
+                </Button>
+              )}
 
-          {saldoInsuficiente && (
-            <Button
-              fullWidth
-              variant="outlined"
-              href="https://wallet.interledger-test.dev"
-              target="_blank"
-              sx={{
-                mb: 1,
-                py: 1.5,
-                borderColor: '#ffd700',
-                color: '#000',
-                '&:hover': {
-                  borderColor: '#ffed4e',
-                  bgcolor: '#fff9e6',
-                },
-                textTransform: 'none',
-                borderRadius: 2,
-                fontSize: '1rem',
-                fontWeight: 600,
-              }}
-            >
-              Depositar Fondos
-            </Button>
+              <Button
+                fullWidth
+                variant="text"
+                onClick={handleCloseModal}
+                disabled={isProcessing}
+                sx={{
+                  color: '#666',
+                  textTransform: 'none',
+                }}
+              >
+                Cancelar
+              </Button>
+            </>
           )}
-
-          <Button
-            fullWidth
-            variant="text"
-            onClick={handleCloseModal}
-            sx={{
-              color: '#666',
-              textTransform: 'none',
-            }}
-          >
-            Cancelar
-          </Button>
         </Box>
       </Modal>
+
+      {/* Bottom Navigation */}
+      <AppBottomNavigation
+        value={navigationValue}
+        onChange={handleNavigationChange}
+      />
     </Box>
   );
 }
