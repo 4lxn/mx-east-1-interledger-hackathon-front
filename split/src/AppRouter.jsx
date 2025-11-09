@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import LoginPage from './components/auth/LoginPage';
 import MainPage from './pages/MainPage';
-//import CreateGroupPage from './pages/CreateGroupPage';
-//import ProfilePage from './pages/ProfilePage';
+import CreateGroupPage from './pages/CreateGroupPage';
+import ProfilePage from './pages/ProfilePage';
 
 function AppRouter() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -62,8 +62,8 @@ function AppRouter() {
       return (
         <MainPage
           grupos={grupos}
-          //onNavigateToCreate={() => setCurrentPage('create')}
-          //onNavigateToProfile={() => setCurrentPage('profile')}
+          onNavigateToCreate={() => setCurrentPage('create')}
+          onNavigateToProfile={() => setCurrentPage('profile')}
         />
       );
   }

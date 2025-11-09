@@ -54,16 +54,6 @@ export default function MainPage({ grupos = [], onNavigateToCreate, onNavigateTo
           px: 3,
         }}
       >
-        <Typography
-          variant="h6"
-          sx={{
-            color: '#888',
-            fontWeight: 400,
-            mb: 2,
-          }}
-        >
-          Main Page
-        </Typography>
       </Box>
 
       {/* Main Content */}
