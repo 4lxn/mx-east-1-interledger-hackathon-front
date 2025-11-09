@@ -44,7 +44,7 @@ export default function AppBottomNavigation({ value, onChange }) {
       }}
     >
       <BottomNavigationAction
-        label="Grupos"
+        label="Groups"
         icon={
           <Box
             sx={{
@@ -63,7 +63,7 @@ export default function AppBottomNavigation({ value, onChange }) {
         }
       />
       <BottomNavigationAction
-        label="Perfil"
+        label="Profile"
         icon={
           <Box
             sx={{

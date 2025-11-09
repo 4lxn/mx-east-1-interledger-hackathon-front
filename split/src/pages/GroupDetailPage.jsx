@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Container,
@@ -15,15 +15,15 @@ import {
   Divider,
   CircularProgress,
   Alert,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack,
   MonetizationOn,
   Add as AddIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
-} from '@mui/icons-material';
-import AppBottomNavigation from '../components/AppBottomNavigation';
+} from "@mui/icons-material";
+import AppBottomNavigation from "../components/AppBottomNavigation";
 
 function TabPanel({ children, value, index }) {
   return (
@@ -33,13 +33,15 @@ function TabPanel({ children, value, index }) {
   );
 }
 
-export default function GroupDetailPage({ 
-  grupo, 
-  onBack, 
+export default function GroupDetailPage({
+  group,
+  user,
+  onBack,
   onAddService,
   onNavigateToProfile,
-  userWallet = 'wallet-address-1234',
-  userBalance: initialBalance = 150.50,
+  onUpdateGroup,
+  userWallet = "wallet-address-1234",
+  userBalance: initialBalance = 150.5,
 }) {
   const [tabValue, setTabValue] = useState(0);
   const [openPayModal, setOpenPayModal] = useState(false);
@@ -47,8 +49,16 @@ export default function GroupDetailPage({
   const [userBalance, setUserBalance] = useState(initialBalance);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [paymentError, setPaymentError] = useState('');
+  const [paymentError, setPaymentError] = useState("");
   const [navigationValue, setNavigationValue] = useState(null);
+  const [paidServices, setPaidServices] = useState(new Set());
+
+  // Make sure group has valid structure
+  const safeGroup = {
+    ...group,
+    services: group?.services || [],
+    members: group?.members || [],
+  };
 
   const handleNavigationChange = (event, newValue) => {
     setNavigationValue(newValue);
@@ -59,70 +69,93 @@ export default function GroupDetailPage({
     }
   };
 
-  // Calcular deudas por miembro
-  const calcularDeudas = () => {
-    if (!grupo.servicios || grupo.servicios.length === 0) return [];
-    
-    const miembrosConfirmados = grupo.miembros?.filter(m => m.estado === 'confirmado') || [];
-    const totalMiembros = miembrosConfirmados.length + 1;
-    
-    return grupo.servicios.map(servicio => ({
-      ...servicio,
-      montoPorPersona: servicio.total / totalMiembros,
+  // Calculate debts per member
+  const calculateDebts = () => {
+    if (!safeGroup.services || safeGroup.services.length === 0) return [];
+
+    const confirmedMembers =
+      safeGroup.members?.filter((m) => m.status === "confirmed") || [];
+    const totalMembers = confirmedMembers.length;
+
+    if (totalMembers === 0) return [];
+
+    return safeGroup.services.map((service) => ({
+      ...service,
+      amountPerPerson: service.total / totalMembers,
+      isPaid: paidServices.has(service.id),
     }));
   };
 
-  const deudas = calcularDeudas();
-  const totalAPagar = deudas.reduce((sum, d) => sum + d.montoPorPersona, 0);
+  const debts = calculateDebts();
 
-  const handlePay = (servicio = null) => {
-    setSelectedPayment(servicio);
+  // Calculate only unpaid debts
+  const unpaidDebts = debts.filter((d) => !d.isPaid);
+  const totalToPay = unpaidDebts.reduce((sum, d) => sum + d.amountPerPerson, 0);
+
+  const handlePay = (service = null) => {
+    setSelectedPayment(service);
     setOpenPayModal(true);
     setPaymentSuccess(false);
-    setPaymentError('');
+    setPaymentError("");
   };
 
   const handleConfirmPayment = async () => {
     setIsProcessing(true);
-    setPaymentError('');
+    setPaymentError("");
 
-    const montoAPagar = selectedPayment ? selectedPayment.montoPorPersona : totalAPagar;
-    
+    const amountToPay = selectedPayment
+      ? selectedPayment.amountPerPerson
+      : totalToPay;
+
     try {
-      // Simular llamada al backend
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate backend call
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Verificar saldo suficiente
-      if (userBalance < montoAPagar) {
-        setPaymentError('Saldo insuficiente');
+      // Check sufficient balance
+      if (userBalance < amountToPay) {
+        setPaymentError("Insufficient balance");
         setIsProcessing(false);
         return;
       }
 
-      // Actualizar balance
-      const nuevoBalance = userBalance - montoAPagar;
-      setUserBalance(nuevoBalance);
-      
-      // Aquí iría la llamada al backend real
-      // await paymentAPI.createPayment({
-      //   groupId: grupo.id,
-      //   serviceId: selectedPayment?.id,
-      //   amount: montoAPagar,
-      //   walletAddress: userWallet,
-      // });
+      // Update balance
+      const newBalance = userBalance - amountToPay;
+      setUserBalance(newBalance);
+
+      // Mark services as paid
+      if (selectedPayment) {
+        setPaidServices((prev) => new Set([...prev, selectedPayment.id]));
+      } else {
+        // Mark all unpaid services as paid
+        setPaidServices((prev) => {
+          const newSet = new Set(prev);
+          unpaidDebts.forEach((debt) => newSet.add(debt.id));
+          return newSet;
+        });
+      }
+
+      // Update group member status
+      if (onUpdateGroup) {
+        const updatedMembers = safeGroup.members.map((member) => {
+          if (member.email === user.email) {
+            return { ...member, hasPaid: true };
+          }
+          return member;
+        });
+        onUpdateGroup({ ...safeGroup, members: updatedMembers });
+      }
 
       setPaymentSuccess(true);
-      
-      // Cerrar modal después de 2 segundos
+
+      // Close modal after 2 seconds
       setTimeout(() => {
         setOpenPayModal(false);
         setSelectedPayment(null);
         setPaymentSuccess(false);
       }, 2000);
-
     } catch (error) {
-      setPaymentError('Error al procesar el pago. Intenta de nuevo.');
-      console.error('Error en pago:', error);
+      setPaymentError("Error processing payment. Please try again.");
+      console.error("Payment error:", error);
     } finally {
       setIsProcessing(false);
     }
@@ -133,40 +166,49 @@ export default function GroupDetailPage({
       setOpenPayModal(false);
       setSelectedPayment(null);
       setPaymentSuccess(false);
-      setPaymentError('');
+      setPaymentError("");
     }
   };
 
-  const montoAPagar = selectedPayment ? selectedPayment.montoPorPersona : totalAPagar;
-  const nuevoBalance = userBalance - montoAPagar;
-  const saldoInsuficiente = nuevoBalance < 0;
+  const amountToPay = selectedPayment
+    ? selectedPayment.amountPerPerson
+    : totalToPay;
+  const newBalance = userBalance - amountToPay;
+  const insufficientBalance = newBalance < 0;
+
+  // Check if current user has paid
+  const currentUserMember = safeGroup.members.find(
+    (m) => m.email === user?.email
+  );
+  const currentUserHasPaid =
+    currentUserMember?.hasPaid || paidServices.size === debts.length;
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        bgcolor: '#2a2a2a',
+        minHeight: "100vh",
+        bgcolor: "#2a2a2a",
         pb: 10,
       }}
     >
       {/* Header */}
       <Box
         sx={{
-          bgcolor: '#2a2a2a',
+          bgcolor: "#2a2a2a",
           pt: 3,
           pb: 2,
           px: 3,
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <IconButton
           onClick={onBack}
           sx={{
-            color: '#fff',
-            bgcolor: 'rgba(255,255,255,0.1)',
-            '&:hover': {
-              bgcolor: 'rgba(255,255,255,0.2)',
+            color: "#fff",
+            bgcolor: "rgba(255,255,255,0.1)",
+            "&:hover": {
+              bgcolor: "rgba(255,255,255,0.2)",
             },
           }}
         >
@@ -175,12 +217,12 @@ export default function GroupDetailPage({
         <Typography
           variant="h6"
           sx={{
-            color: '#fff',
+            color: "#fff",
             ml: 2,
             fontWeight: 500,
           }}
         >
-          Detalle del Grupo
+          Group Details
         </Typography>
       </Box>
 
@@ -188,27 +230,27 @@ export default function GroupDetailPage({
       <Container maxWidth="sm" sx={{ px: 3 }}>
         <Box
           sx={{
-            bgcolor: 'white',
+            bgcolor: "white",
             borderRadius: 3,
-            overflow: 'hidden',
-            minHeight: 'calc(100vh - 200px)',
+            overflow: "hidden",
+            minHeight: "calc(100vh - 200px)",
           }}
         >
-          {/* Header del grupo */}
+          {/* Group header */}
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
               pt: 4,
               pb: 2,
-              bgcolor: '#fafafa',
+              bgcolor: "#fafafa",
             }}
           >
             <MonetizationOn
               sx={{
                 fontSize: 40,
-                color: '#ffd700',
+                color: "#ffd700",
                 mb: 2,
               }}
             />
@@ -217,22 +259,22 @@ export default function GroupDetailPage({
               sx={{
                 width: 100,
                 height: 100,
-                bgcolor: '#f4d56f',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                bgcolor: "#f4d56f",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 mb: 2,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
               }}
             >
-              <Typography sx={{ fontSize: '4rem' }}>
-                {grupo.emoji}
+              <Typography sx={{ fontSize: "4rem" }}>
+                {safeGroup.emoji}
               </Typography>
             </Box>
 
             <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-              {grupo.nombre}
+              {safeGroup.name}
             </Typography>
 
             {/* Balance Card */}
@@ -240,16 +282,19 @@ export default function GroupDetailPage({
               sx={{
                 mt: 2,
                 mx: 3,
-                width: 'calc(100% - 48px)',
-                bgcolor: '#f4d56f',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                width: "calc(100% - 48px)",
+                bgcolor: "#f4d56f",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               }}
             >
-              <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
-                <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>
-                  Tu balance
+              <CardContent sx={{ py: 2, "&:last-child": { pb: 2 } }}>
+                <Typography variant="body2" sx={{ color: "#666", mb: 0.5 }}>
+                  Your Balance
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: '#000' }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: "#000" }}
+                >
                   ${userBalance.toFixed(2)}
                 </Typography>
               </CardContent>
@@ -263,256 +308,315 @@ export default function GroupDetailPage({
             variant="fullWidth"
             sx={{
               borderBottom: 1,
-              borderColor: 'divider',
-              bgcolor: '#fafafa',
-              '& .MuiTab-root': {
-                textTransform: 'none',
+              borderColor: "divider",
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontSize: "1rem",
                 fontWeight: 500,
-                fontSize: '1rem',
+                color: "#666",
+                "&.Mui-selected": {
+                  color: "#000",
+                  fontWeight: 600,
+                },
               },
-              '& .Mui-selected': {
-                color: '#000',
-                fontWeight: 600,
-              },
-              '& .MuiTabs-indicator': {
-                backgroundColor: '#ffd700',
+              "& .MuiTabs-indicator": {
+                backgroundColor: "#ffd700",
                 height: 3,
               },
             }}
           >
-            <Tab label="Servicios" />
-            <Tab label="Miembros" />
-            <Tab label="Pagos" />
+            <Tab label="Services" />
+            <Tab label="Members" />
+            <Tab label="Payments" />
           </Tabs>
 
-          {/* Tab Servicios */}
+          {/* Tab Services */}
           <TabPanel value={tabValue} index={0}>
             <Box sx={{ px: 3 }}>
-              {grupo.servicios && grupo.servicios.length > 0 ? (
-                grupo.servicios.map((servicio) => (
+              {safeGroup.services && safeGroup.services.length > 0 ? (
+                safeGroup.services.map((service) => (
                   <Card
-                    key={servicio.id}
+                    key={service.id}
                     sx={{
                       mb: 2,
-                      bgcolor: '#f5f5f5',
+                      bgcolor: "#f5f5f5",
                       borderRadius: 3,
-                      boxShadow: 'none',
-                      border: '1px solid #e0e0e0',
+                      boxShadow: "none",
                     }}
                   >
                     <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          {servicio.nombre}
+                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                        {service.name}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "#666", mb: 1 }}>
+                        Total: ${service.total?.toFixed(2) || "0.00"}
+                      </Typography>
+                      {service.dueDate && (
+                        <Typography variant="body2" sx={{ color: "#666" }}>
+                          Due: {service.dueDate}
                         </Typography>
-                        <Chip
-                          label={`$${servicio.total.toFixed(2)}`}
-                          sx={{
-                            bgcolor: '#ffd700',
-                            fontWeight: 600,
-                            fontSize: '0.95rem',
-                          }}
-                        />
-                      </Box>
-                      <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>
-                        Vencimiento: {servicio.fechaVencimiento || 'Sin fecha'}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: '#999', fontSize: '0.85rem' }}>
-                        Wallet: {servicio.wallet.substring(0, 20)}...
-                      </Typography>
+                      )}
                     </CardContent>
                   </Card>
                 ))
               ) : (
-                <Box sx={{ textAlign: 'center', py: 6 }}>
-                  <Typography variant="h6" sx={{ color: '#999', mb: 1 }}>
-                    No hay servicios listados
+                <Box sx={{ textAlign: "center", py: 6 }}>
+                  <Typography variant="h6" sx={{ color: "#999", mb: 2 }}>
+                    No services yet
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#aaa' }}>
-                    Agrega servicios para empezar a dividir gastos
-                  </Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={onAddService}
+                    sx={{
+                      bgcolor: "#000",
+                      "&:hover": { bgcolor: "#333" },
+                      textTransform: "none",
+                      borderRadius: 2,
+                    }}
+                  >
+                    Add Service
+                  </Button>
                 </Box>
               )}
-
-              <Fab
-                color="primary"
-                aria-label="add"
-                onClick={onAddService}
-                sx={{
-                  position: 'fixed',
-                  bottom: 100,
-                  right: 30,
-                  bgcolor: 'white',
-                  color: '#000',
-                  border: '2px solid #000',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                  '&:hover': {
-                    bgcolor: '#f5f5f5',
-                  },
-                }}
-              >
-                <AddIcon />
-              </Fab>
             </Box>
           </TabPanel>
 
-          {/* Tab Miembros */}
+          {/* Tab Members */}
           <TabPanel value={tabValue} index={1}>
             <Box sx={{ px: 3 }}>
-              {deudas.length > 0 && (
-                <>
-                  {grupo.miembros?.filter(m => m.estado === 'confirmado').map((miembro) => {
-                    const montoPorPersona = deudas.reduce((sum, d) => sum + d.montoPorPersona, 0);
-                    const haPagado = miembro.pagado || false;
+              {safeGroup.members && safeGroup.members.length > 0 ? (
+                safeGroup.members.map((member) => {
+                  const isCurrentUser = member.email === user?.email;
+                  const memberHasPaid =
+                    member.hasPaid || (isCurrentUser && currentUserHasPaid);
+                  const amountOwed = memberHasPaid ? 0 : totalToPay;
 
-                    return (
-                      <Card
-                        key={miembro.id}
-                        sx={{
-                          mb: 2,
-                          bgcolor: haPagado ? '#e8f5e9' : '#fff3cd',
-                          borderRadius: 3,
-                          boxShadow: 'none',
-                          border: `1px solid ${haPagado ? '#4caf50' : '#ffd700'}`,
-                        }}
-                      >
-                        <CardContent>
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <Typography sx={{ fontSize: '2rem', mr: 2 }}>
-                                {miembro.avatar || '👤'}
-                              </Typography>
-                              <Box>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                                  {miembro.nombre || miembro.email}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: '#666' }}>
-                                  Debe: ${montoPorPersona.toFixed(2)}
-                                </Typography>
-                              </Box>
-                            </Box>
-                            {haPagado ? (
-                              <CheckCircleIcon sx={{ color: '#4caf50', fontSize: 32 }} />
-                            ) : (
-                              <CancelIcon sx={{ color: '#ff9800', fontSize: 32 }} />
-                            )}
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </>
-              )}
-
-              {grupo.miembros?.filter(m => m.estado === 'pendiente').length > 0 && (
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="subtitle2" sx={{ color: '#999', mb: 2 }}>
-                    Pendientes de aceptar
-                  </Typography>
-                  {grupo.miembros.filter(m => m.estado === 'pendiente').map((miembro) => (
-                    <Chip
-                      key={miembro.id}
-                      label={miembro.email}
+                  return (
+                    <Card
+                      key={member.id}
                       sx={{
-                        mr: 1,
-                        mb: 1,
-                        bgcolor: '#f5f5f5',
+                        mb: 2,
+                        bgcolor: memberHasPaid ? "#e8f5e9" : "#fff3e0",
+                        borderRadius: 3,
+                        boxShadow: "none",
+                        border: `2px solid ${
+                          memberHasPaid ? "#4caf50" : "#ff9800"
+                        }`,
                       }}
-                    />
-                  ))}
+                    >
+                      <CardContent
+                        sx={{ display: "flex", alignItems: "center", py: 2 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 50,
+                            height: 50,
+                            bgcolor: "#f4d56f",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            mr: 2,
+                          }}
+                        >
+                          <Typography sx={{ fontSize: "1.8rem" }}>
+                            {member.avatar || "👤"}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              {member.name}
+                              {isCurrentUser && " (You)"}
+                            </Typography>
+                            <Chip
+                              label={
+                                member.status === "confirmed"
+                                  ? "Confirmed"
+                                  : "Pending"
+                              }
+                              size="small"
+                              sx={{
+                                bgcolor:
+                                  member.status === "confirmed"
+                                    ? "#4caf50"
+                                    : "#ff9800",
+                                color: "white",
+                                fontWeight: 600,
+                                fontSize: "0.7rem",
+                              }}
+                            />
+                          </Box>
+                          <Typography variant="body2" sx={{ color: "#666" }}>
+                            {member.email}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: "right" }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              color: memberHasPaid ? "#4caf50" : "#ff9800",
+                            }}
+                          >
+                            ${amountOwed.toFixed(2)}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "#666" }}>
+                            {memberHasPaid ? "Paid" : "Owes"}
+                          </Typography>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              ) : (
+                <Box sx={{ textAlign: "center", py: 6 }}>
+                  <Typography variant="h6" sx={{ color: "#999" }}>
+                    No members yet
+                  </Typography>
                 </Box>
               )}
             </Box>
           </TabPanel>
 
-          {/* Tab Pagos */}
+          {/* Tab Payments */}
           <TabPanel value={tabValue} index={2}>
             <Box sx={{ px: 3 }}>
-              {deudas.length > 0 ? (
+              {debts.length > 0 ? (
                 <>
                   <Card
                     sx={{
                       mb: 3,
-                      bgcolor: '#f4d56f',
+                      bgcolor: "#f4d56f",
                       borderRadius: 3,
-                      boxShadow: 'none',
+                      boxShadow: "none",
                     }}
                   >
                     <CardContent>
-                      <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
-                        Total a pagar
+                      <Typography variant="body2" sx={{ color: "#666", mb: 1 }}>
+                        Total to Pay
                       </Typography>
                       <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                        ${totalAPagar.toFixed(2)}
+                        ${totalToPay.toFixed(2)}
                       </Typography>
+                      {paidServices.size > 0 && (
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "#4caf50", mt: 1 }}
+                        >
+                          ✓ {paidServices.size} service
+                          {paidServices.size !== 1 ? "s" : ""} paid
+                        </Typography>
+                      )}
                     </CardContent>
                   </Card>
 
                   <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                    Desglose por concepto
+                    Breakdown by Service
                   </Typography>
 
-                  {deudas.map((servicio) => (
+                  {debts.map((service) => (
                     <Card
-                      key={servicio.id}
+                      key={service.id}
                       sx={{
                         mb: 2,
-                        bgcolor: '#f5f5f5',
+                        bgcolor: service.isPaid ? "#e8f5e9" : "#f5f5f5",
                         borderRadius: 3,
-                        boxShadow: 'none',
+                        boxShadow: "none",
+                        opacity: service.isPaid ? 0.7 : 1,
                       }}
                     >
                       <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
                           <Box>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                              {servicio.nombre}
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              {service.name}
+                              {service.isPaid && " ✓"}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: '#666' }}>
-                              Tu parte: ${servicio.montoPorPersona.toFixed(2)}
+                            <Typography variant="body2" sx={{ color: "#666" }}>
+                              Your share: ${service.amountPerPerson.toFixed(2)}
                             </Typography>
                           </Box>
-                          <Button
-                            variant="contained"
-                            onClick={() => handlePay(servicio)}
-                            sx={{
-                              bgcolor: '#000',
-                              '&:hover': { bgcolor: '#333' },
-                              textTransform: 'none',
-                              borderRadius: 2,
-                            }}
-                          >
-                            Pagar
-                          </Button>
+                          {!service.isPaid && (
+                            <Button
+                              variant="contained"
+                              onClick={() => handlePay(service)}
+                              sx={{
+                                bgcolor: "#000",
+                                "&:hover": { bgcolor: "#333" },
+                                textTransform: "none",
+                                borderRadius: 2,
+                              }}
+                            >
+                              Pay
+                            </Button>
+                          )}
+                          {service.isPaid && (
+                            <Chip
+                              label="Paid"
+                              sx={{
+                                bgcolor: "#4caf50",
+                                color: "white",
+                                fontWeight: 600,
+                              }}
+                            />
+                          )}
                         </Box>
                       </CardContent>
                     </Card>
                   ))}
 
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    size="large"
-                    onClick={() => handlePay(null)}
-                    sx={{
-                      mt: 2,
-                      py: 2,
-                      bgcolor: '#ffd700',
-                      color: '#000',
-                      fontWeight: 600,
-                      '&:hover': { bgcolor: '#ffed4e' },
-                      textTransform: 'none',
-                      borderRadius: 3,
-                      boxShadow: '0 4px 12px rgba(255,215,0,0.3)',
-                    }}
-                  >
-                    Pagar Todo (${totalAPagar.toFixed(2)})
-                  </Button>
+                  {unpaidDebts.length > 0 && (
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      size="large"
+                      onClick={() => handlePay(null)}
+                      sx={{
+                        mt: 2,
+                        py: 2,
+                        bgcolor: "#ffd700",
+                        color: "#000",
+                        fontWeight: 600,
+                        "&:hover": { bgcolor: "#ffed4e" },
+                        textTransform: "none",
+                        borderRadius: 3,
+                        boxShadow: "0 4px 12px rgba(255,215,0,0.3)",
+                      }}
+                    >
+                      Pay All (${totalToPay.toFixed(2)})
+                    </Button>
+                  )}
+
+                  {unpaidDebts.length === 0 && (
+                    <Alert severity="success" sx={{ mt: 2 }}>
+                      All payments completed! 🎉
+                    </Alert>
+                  )}
                 </>
               ) : (
-                <Box sx={{ textAlign: 'center', py: 6 }}>
-                  <Typography variant="h6" sx={{ color: '#999' }}>
-                    No hay pagos pendientes
+                <Box sx={{ textAlign: "center", py: 6 }}>
+                  <Typography variant="h6" sx={{ color: "#999" }}>
+                    No pending payments
                   </Typography>
                 </Box>
               )}
@@ -521,39 +625,39 @@ export default function GroupDetailPage({
         </Box>
       </Container>
 
-      {/* Modal de Pago */}
-      <Modal
-        open={openPayModal}
-        onClose={handleCloseModal}
-      >
+      {/* Payment Modal */}
+      <Modal open={openPayModal} onClose={handleCloseModal}>
         <Box
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '90%',
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "90%",
             maxWidth: 400,
-            bgcolor: 'white',
+            bgcolor: "white",
             borderRadius: 3,
             boxShadow: 24,
             p: 4,
           }}
         >
           {paymentSuccess ? (
-            <Box sx={{ textAlign: 'center' }}>
-              <CheckCircleIcon sx={{ fontSize: 80, color: '#4caf50', mb: 2 }} />
-              <Typography variant="h5" sx={{ fontWeight: 600, color: '#4caf50' }}>
-                ¡Pago Exitoso!
+            <Box sx={{ textAlign: "center" }}>
+              <CheckCircleIcon sx={{ fontSize: 80, color: "#4caf50", mb: 2 }} />
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 600, color: "#4caf50" }}
+              >
+                Payment Successful!
               </Typography>
-              <Typography variant="body1" sx={{ mt: 2, color: '#666' }}>
-                Tu pago se ha procesado correctamente
+              <Typography variant="body1" sx={{ mt: 2, color: "#666" }}>
+                Your payment has been processed
               </Typography>
             </Box>
           ) : (
             <>
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                Confirmar Pago
+                Confirm Payment
               </Typography>
 
               {paymentError && (
@@ -563,49 +667,61 @@ export default function GroupDetailPage({
               )}
 
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
-                  Concepto
+                <Typography variant="body2" sx={{ color: "#666", mb: 1 }}>
+                  Service
                 </Typography>
                 <Typography variant="h6">
-                  {selectedPayment ? selectedPayment.nombre : 'Todos los servicios'}
+                  {selectedPayment ? selectedPayment.name : "All services"}
                 </Typography>
               </Box>
 
               <Divider sx={{ my: 2 }} />
 
               <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    Balance actual
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ color: "#666" }}>
+                    Current Balance
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
                     ${userBalance.toFixed(2)}
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    Monto a pagar
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ color: "#666" }}>
+                    Amount to Pay
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    -${montoAPagar.toFixed(2)}
+                    -${amountToPay.toFixed(2)}
                   </Typography>
                 </Box>
 
                 <Divider sx={{ my: 1 }} />
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    Nuevo balance
+                    New Balance
                   </Typography>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
+                  <Typography
+                    variant="h6"
+                    sx={{
                       fontWeight: 600,
-                      color: saldoInsuficiente ? '#f44336' : '#4caf50',
+                      color: insufficientBalance ? "#f44336" : "#4caf50",
                     }}
                   >
-                    ${nuevoBalance.toFixed(2)}
+                    ${newBalance.toFixed(2)}
                   </Typography>
                 </Box>
               </Box>
@@ -614,30 +730,30 @@ export default function GroupDetailPage({
                 fullWidth
                 variant="contained"
                 onClick={handleConfirmPayment}
-                disabled={saldoInsuficiente || isProcessing}
+                disabled={insufficientBalance || isProcessing}
                 sx={{
                   mb: 2,
                   py: 1.5,
-                  bgcolor: '#000',
-                  '&:hover': { bgcolor: '#333' },
-                  '&:disabled': {
-                    bgcolor: '#e0e0e0',
-                    color: '#999',
+                  bgcolor: "#000",
+                  "&:hover": { bgcolor: "#333" },
+                  "&:disabled": {
+                    bgcolor: "#e0e0e0",
+                    color: "#999",
                   },
-                  textTransform: 'none',
+                  textTransform: "none",
                   borderRadius: 2,
-                  fontSize: '1rem',
+                  fontSize: "1rem",
                   fontWeight: 600,
                 }}
               >
                 {isProcessing ? (
-                  <CircularProgress size={24} sx={{ color: '#999' }} />
+                  <CircularProgress size={24} sx={{ color: "#999" }} />
                 ) : (
-                  'PAGAR'
+                  "PAY"
                 )}
               </Button>
 
-              {saldoInsuficiente && (
+              {insufficientBalance && (
                 <Button
                   fullWidth
                   variant="outlined"
@@ -646,19 +762,19 @@ export default function GroupDetailPage({
                   sx={{
                     mb: 1,
                     py: 1.5,
-                    borderColor: '#ffd700',
-                    color: '#000',
-                    '&:hover': {
-                      borderColor: '#ffed4e',
-                      bgcolor: '#fff9e6',
+                    borderColor: "#ffd700",
+                    color: "#000",
+                    "&:hover": {
+                      borderColor: "#ffed4e",
+                      bgcolor: "#fff9e6",
                     },
-                    textTransform: 'none',
+                    textTransform: "none",
                     borderRadius: 2,
-                    fontSize: '1rem',
+                    fontSize: "1rem",
                     fontWeight: 600,
                   }}
                 >
-                  Depositar Fondos
+                  Deposit Funds
                 </Button>
               )}
 
@@ -668,11 +784,11 @@ export default function GroupDetailPage({
                 onClick={handleCloseModal}
                 disabled={isProcessing}
                 sx={{
-                  color: '#666',
-                  textTransform: 'none',
+                  color: "#666",
+                  textTransform: "none",
                 }}
               >
-                Cancelar
+                Cancel
               </Button>
             </>
           )}

@@ -31,8 +31,8 @@ const avatarOptions = [
   "🐔",
 ];
 
-export default function LoginPage({ onLogin }) {
-  const [isLogin, setIsLogin] = useState(true);
+export default function LoginPage({ onLogin, onSignup }) {
+  const [isLoginMode, setIsLoginMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -43,6 +43,7 @@ export default function LoginPage({ onLogin }) {
     avatar: "🐶",
   });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,40 +54,67 @@ export default function LoginPage({ onLogin }) {
     setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
-    if (!formData.email || !formData.password) {
-      setError("Por favor completa todos los campos");
-      return;
-    }
-
-    if (!isLogin) {
-      if (!formData.wallet) {
-        setError("Por favor ingresa tu dirección de wallet");
+    try {
+      if (!formData.email || !formData.password) {
+        setError("Please fill in all fields");
+        setIsLoading(false);
         return;
       }
-      if (formData.password !== formData.confirmPassword) {
-        setError("Las contraseñas no coinciden");
-        return;
+
+      if (!isLoginMode) {
+        // Signup validation
+        if (!formData.name) {
+          setError("Please enter your name");
+          setIsLoading(false);
+          return;
+        }
+        if (!formData.wallet) {
+          setError("Please enter your wallet address");
+          setIsLoading(false);
+          return;
+        }
+        if (formData.password !== formData.confirmPassword) {
+          setError("Passwords do not match");
+          setIsLoading(false);
+          return;
+        }
+
+        const signupData = {
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+          wallet: formData.wallet,
+          avatar: formData.avatar,
+        };
+
+        await onSignup(signupData);
+      } else {
+        // Login
+        const userData = {
+          email: formData.email,
+          name: formData.name || formData.email.split("@")[0],
+          wallet: formData.wallet || "$ilp.interledger-test.dev/default-wallet",
+          avatar: formData.avatar,
+        };
+
+        if (onLogin) {
+          onLogin(userData);
+        }
       }
-    }
-
-    const userData = {
-      email: formData.email,
-      name: formData.name || formData.email.split("@")[0],
-      wallet: formData.wallet,
-      avatar: formData.avatar,
-    };
-
-    if (onLogin) {
-      onLogin(userData);
+    } catch (err) {
+      setError(err.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const toggleMode = () => {
-    setIsLogin(!isLogin);
+    setIsLoginMode(!isLoginMode);
     setError("");
     setFormData({
       name: "",
@@ -158,7 +186,7 @@ export default function LoginPage({ onLogin }) {
               }}
             >
               <Typography sx={{ fontSize: "8rem" }}>
-                {!isLogin ? formData.avatar : "👨🏻‍💻"}
+                {!isLoginMode ? formData.avatar : "👨🏻‍💻"}
               </Typography>
             </Box>
           </Box>
@@ -170,11 +198,11 @@ export default function LoginPage({ onLogin }) {
           )}
 
           <Box component="form" onSubmit={handleSubmit}>
-            {!isLogin && (
+            {!isLoginMode && (
               <>
                 <TextField
                   fullWidth
-                  placeholder="Nombre completo"
+                  placeholder="Full Name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
@@ -191,7 +219,7 @@ export default function LoginPage({ onLogin }) {
 
                 <TextField
                   fullWidth
-                  placeholder="Dirección de Wallet"
+                  placeholder="Wallet Address"
                   name="wallet"
                   value={formData.wallet}
                   onChange={handleChange}
@@ -214,7 +242,7 @@ export default function LoginPage({ onLogin }) {
                     color: "#666",
                   }}
                 >
-                  Elige tu avatar
+                  Choose your avatar
                 </Typography>
                 <Grid
                   container
@@ -279,13 +307,13 @@ export default function LoginPage({ onLogin }) {
 
             <TextField
               fullWidth
-              placeholder="Contraseña"
+              placeholder="Password"
               name="password"
               type={showPassword ? "text" : "password"}
               value={formData.password}
               onChange={handleChange}
               sx={{
-                mb: !isLogin ? 2 : 4,
+                mb: !isLoginMode ? 2 : 4,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 3,
                   bgcolor: "#f5f5f5",
@@ -308,10 +336,10 @@ export default function LoginPage({ onLogin }) {
               }}
             />
 
-            {!isLogin && (
+            {!isLoginMode && (
               <TextField
                 fullWidth
-                placeholder="Confirmar contraseña"
+                placeholder="Confirm Password"
                 name="confirmPassword"
                 type={showPassword ? "text" : "password"}
                 value={formData.confirmPassword}
@@ -333,6 +361,7 @@ export default function LoginPage({ onLogin }) {
               type="submit"
               variant="contained"
               size="large"
+              disabled={isLoading}
               sx={{
                 mb: 2,
                 py: 2,
@@ -349,7 +378,11 @@ export default function LoginPage({ onLogin }) {
                 },
               }}
             >
-              {isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
+              {isLoading
+                ? "Loading..."
+                : isLoginMode
+                ? "Sign In"
+                : "Create Account"}
             </Button>
 
             <Button
@@ -357,6 +390,7 @@ export default function LoginPage({ onLogin }) {
               variant="outlined"
               size="large"
               onClick={toggleMode}
+              disabled={isLoading}
               sx={{
                 py: 2,
                 borderRadius: 10,
@@ -374,7 +408,9 @@ export default function LoginPage({ onLogin }) {
                 },
               }}
             >
-              {isLogin ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?"}
+              {isLoginMode
+                ? "Don't have an account?"
+                : "Already have an account?"}
             </Button>
           </Box>
         </Box>

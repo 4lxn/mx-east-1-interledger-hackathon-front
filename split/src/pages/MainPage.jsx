@@ -18,8 +18,8 @@ import {
 import AppBottomNavigation from "../components/AppBottomNavigation";
 
 export default function MainPage({
-  grupos = [],
-  solicitudes = [],
+  groups = [],
+  requests = [],
   onNavigateToCreate,
   onNavigateToProfile,
   onNavigateToGroup,
@@ -41,22 +41,22 @@ export default function MainPage({
     }
   };
 
-  const handleGroupClick = (grupo) => {
-    console.log("Navegando a grupo:", grupo);
+  const handleGroupClick = (group) => {
+    console.log("Navigating to group:", group);
     if (onNavigateToGroup) {
-      onNavigateToGroup(grupo);
+      onNavigateToGroup(group);
     }
   };
 
-  const handleAccept = (solicitud) => {
+  const handleAccept = (request) => {
     if (onAcceptRequest) {
-      onAcceptRequest(solicitud);
+      onAcceptRequest(request);
     }
   };
 
-  const handleReject = (solicitud) => {
+  const handleReject = (request) => {
     if (onRejectRequest) {
-      onRejectRequest(solicitud);
+      onRejectRequest(request);
     }
   };
 
@@ -107,8 +107,8 @@ export default function MainPage({
             </Box>
           </Box>
 
-          {/* Solicitudes */}
-          {solicitudes && solicitudes.length > 0 && (
+          {/* Requests */}
+          {requests && requests.length > 0 && (
             <Box sx={{ mb: 4 }}>
               <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <Typography
@@ -118,10 +118,10 @@ export default function MainPage({
                     color: "#000",
                   }}
                 >
-                  Solicitudes
+                  Requests
                 </Typography>
                 <Chip
-                  label={solicitudes.length}
+                  label={requests.length}
                   size="small"
                   sx={{
                     ml: 2,
@@ -132,9 +132,9 @@ export default function MainPage({
                 />
               </Box>
 
-              {solicitudes.map((solicitud) => (
+              {requests.map((request) => (
                 <Card
-                  key={solicitud.id}
+                  key={request.id}
                   sx={{
                     mb: 2,
                     bgcolor: "#fff9e6",
@@ -158,15 +158,15 @@ export default function MainPage({
                         }}
                       >
                         <Typography sx={{ fontSize: "1.8rem" }}>
-                          {solicitud.grupoEmoji}
+                          {request.groupEmoji}
                         </Typography>
                       </Box>
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          {solicitud.grupoNombre}
+                          {request.groupName}
                         </Typography>
                         <Typography variant="body2" sx={{ color: "#666" }}>
-                          {solicitud.invitadoPor} te ha agregado
+                          {request.invitedBy} added you
                         </Typography>
                       </Box>
                     </Box>
@@ -176,7 +176,7 @@ export default function MainPage({
                         fullWidth
                         variant="contained"
                         startIcon={<CheckIcon />}
-                        onClick={() => handleAccept(solicitud)}
+                        onClick={() => handleAccept(request)}
                         sx={{
                           bgcolor: "#4caf50",
                           "&:hover": { bgcolor: "#45a049" },
@@ -185,13 +185,13 @@ export default function MainPage({
                           fontWeight: 600,
                         }}
                       >
-                        Aceptar
+                        Accept
                       </Button>
                       <Button
                         fullWidth
                         variant="outlined"
                         startIcon={<CloseIcon />}
-                        onClick={() => handleReject(solicitud)}
+                        onClick={() => handleReject(request)}
                         sx={{
                           borderColor: "#f44336",
                           color: "#f44336",
@@ -204,7 +204,7 @@ export default function MainPage({
                           fontWeight: 600,
                         }}
                       >
-                        Rechazar
+                        Reject
                       </Button>
                     </Box>
                   </CardContent>
@@ -213,7 +213,7 @@ export default function MainPage({
             </Box>
           )}
 
-          {/* Título Grupos */}
+          {/* Groups Title */}
           <Typography
             variant="h5"
             sx={{
@@ -222,16 +222,16 @@ export default function MainPage({
               color: "#000",
             }}
           >
-            Mis Grupos
+            My Groups
           </Typography>
 
-          {/* Lista de Grupos */}
-          {grupos.length > 0 ? (
+          {/* Groups List */}
+          {groups.length > 0 ? (
             <Box sx={{ mb: 10 }}>
-              {grupos.map((grupo) => (
+              {groups.map((group) => (
                 <Card
-                  key={grupo.id}
-                  onClick={() => handleGroupClick(grupo)}
+                  key={group.id}
+                  onClick={() => handleGroupClick(group)}
                   sx={{
                     mb: 2,
                     bgcolor: "#fafafa",
@@ -268,7 +268,7 @@ export default function MainPage({
                       }}
                     >
                       <Typography sx={{ fontSize: "2rem" }}>
-                        {grupo.emoji}
+                        {group.emoji}
                       </Typography>
                     </Box>
                     <Box sx={{ flex: 1 }}>
@@ -279,12 +279,12 @@ export default function MainPage({
                           color: "#000",
                         }}
                       >
-                        {grupo.nombre}
+                        {group.name}
                       </Typography>
-                      {grupo.miembros && (
+                      {group.members && (
                         <Typography variant="body2" sx={{ color: "#666" }}>
-                          {grupo.miembros.length} miembro
-                          {grupo.miembros.length !== 1 ? "s" : ""}
+                          {group.members.length} member
+                          {group.members.length !== 1 ? "s" : ""}
                         </Typography>
                       )}
                     </Box>
@@ -307,7 +307,7 @@ export default function MainPage({
                   mb: 1,
                 }}
               >
-                Aún no has creado ningún grupo
+                You haven't created any groups yet
               </Typography>
               <Typography
                 variant="body2"
@@ -315,7 +315,7 @@ export default function MainPage({
                   color: "#aaa",
                 }}
               >
-                Toca el botón + para crear tu primer grupo
+                Tap the + button to create your first group
               </Typography>
             </Box>
           )}

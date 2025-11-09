@@ -39,70 +39,66 @@ const emojiOptions = [
   "🎯",
 ];
 
-export default function CreateGroupPage({ onBack, onCreate }) {
+export default function CreateGroupPage({ user, onBack, onCreate }) {
   const [groupName, setGroupName] = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState("🏠");
 
-  // Servicios
-  const [servicios, setServicios] = useState([]);
-  const [servicioNombre, setServicioNombre] = useState("");
-  const [servicioWallet, setServicioWallet] = useState("");
+  // Services
+  const [services, setServices] = useState([]);
+  const [serviceName, setServiceName] = useState("");
+  const [serviceWallet, setServiceWallet] = useState("");
 
-  // Miembros
-  const [miembros, setMiembros] = useState([]);
-  const [miembroEmail, setMiembroEmail] = useState("");
+  // Members (pending members, creator will be added automatically)
+  const [members, setMembers] = useState([]);
+  const [memberEmail, setMemberEmail] = useState("");
 
-  const handleAddServicio = () => {
-    if (
-      servicioNombre.trim() &&
-      servicioWallet.trim() &&
-      servicios.length < 10
-    ) {
-      setServicios([
-        ...servicios,
+  const handleAddService = () => {
+    if (serviceName.trim() && serviceWallet.trim() && services.length < 10) {
+      setServices([
+        ...services,
         {
           id: Date.now(),
-          nombre: servicioNombre,
-          wallet: servicioWallet,
+          name: serviceName,
+          wallet: serviceWallet,
         },
       ]);
-      setServicioNombre("");
-      setServicioWallet("");
+      setServiceName("");
+      setServiceWallet("");
     }
   };
 
-  const handleRemoveServicio = (id) => {
-    setServicios(servicios.filter((s) => s.id !== id));
+  const handleRemoveService = (id) => {
+    setServices(services.filter((s) => s.id !== id));
   };
 
-  const handleAddMiembro = () => {
-    if (miembroEmail.trim() && /\S+@\S+\.\S+/.test(miembroEmail)) {
-      if (!miembros.find((m) => m.email === miembroEmail)) {
-        setMiembros([
-          ...miembros,
+  const handleAddMember = () => {
+    if (memberEmail.trim() && /\S+@\S+\.\S+/.test(memberEmail)) {
+      if (!members.find((m) => m.email === memberEmail)) {
+        setMembers([
+          ...members,
           {
             id: Date.now(),
-            email: miembroEmail,
-            estado: "pendiente",
+            email: memberEmail,
+            status: "pending",
           },
         ]);
-        setMiembroEmail("");
+        setMemberEmail("");
       }
     }
   };
 
-  const handleRemoveMiembro = (id) => {
-    setMiembros(miembros.filter((m) => m.id !== id));
+  const handleRemoveMember = (id) => {
+    setMembers(members.filter((m) => m.id !== id));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (groupName.trim()) {
       onCreate({
-        nombre: groupName,
+        name: groupName,
         emoji: selectedEmoji,
-        servicios,
-        miembros,
+        services,
+        members, // These will be pending members
       });
     }
   };
@@ -142,7 +138,7 @@ export default function CreateGroupPage({ onBack, onCreate }) {
             fontWeight: 400,
           }}
         >
-          Crear Grupo
+          Create Group
         </Typography>
       </Box>
 
@@ -174,13 +170,13 @@ export default function CreateGroupPage({ onBack, onCreate }) {
           </Box>
 
           <form onSubmit={handleSubmit}>
-            {/* Nombre del grupo */}
+            {/* Group Name */}
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-              Nombre del grupo
+              Group Name
             </Typography>
             <TextField
               fullWidth
-              placeholder="Ej: Casa, Viaje, Amigos..."
+              placeholder="E.g: House, Trip, Friends..."
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
               sx={{
@@ -194,9 +190,9 @@ export default function CreateGroupPage({ onBack, onCreate }) {
               }}
             />
 
-            {/* Seleccionar emoji */}
+            {/* Select Emoji */}
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-              Elige un ícono
+              Choose an Icon
             </Typography>
             <Grid
               container
@@ -233,19 +229,19 @@ export default function CreateGroupPage({ onBack, onCreate }) {
               ))}
             </Grid>
 
-            {/* Servicios */}
+            {/* Services */}
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-              Agregar servicios (opcional)
+              Add Services (optional)
             </Typography>
             <Typography variant="body2" sx={{ mb: 2, color: "#666" }}>
-              Máximo 10 servicios
+              Maximum 10 services
             </Typography>
 
             <TextField
               fullWidth
-              placeholder="Nombre del servicio (Ej: Luz, Agua, Netflix)"
-              value={servicioNombre}
-              onChange={(e) => setServicioNombre(e.target.value)}
+              placeholder="Service name (E.g: Electricity, Water, Netflix)"
+              value={serviceName}
+              onChange={(e) => setServiceName(e.target.value)}
               sx={{
                 mb: 2,
                 "& .MuiOutlinedInput-root": {
@@ -260,9 +256,9 @@ export default function CreateGroupPage({ onBack, onCreate }) {
             <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
               <TextField
                 fullWidth
-                placeholder="Wallet del servicio"
-                value={servicioWallet}
-                onChange={(e) => setServicioWallet(e.target.value)}
+                placeholder="Service wallet"
+                value={serviceWallet}
+                onChange={(e) => setServiceWallet(e.target.value)}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 3,
@@ -274,11 +270,11 @@ export default function CreateGroupPage({ onBack, onCreate }) {
               />
               <Button
                 variant="contained"
-                onClick={handleAddServicio}
+                onClick={handleAddService}
                 disabled={
-                  !servicioNombre.trim() ||
-                  !servicioWallet.trim() ||
-                  servicios.length >= 10
+                  !serviceName.trim() ||
+                  !serviceWallet.trim() ||
+                  services.length >= 10
                 }
                 sx={{
                   minWidth: "56px",
@@ -292,11 +288,11 @@ export default function CreateGroupPage({ onBack, onCreate }) {
               </Button>
             </Box>
 
-            {servicios.length > 0 && (
+            {services.length > 0 && (
               <List sx={{ bgcolor: "#f5f5f5", borderRadius: 2, mb: 3, p: 1 }}>
-                {servicios.map((servicio) => (
+                {services.map((service) => (
                   <ListItem
-                    key={servicio.id}
+                    key={service.id}
                     sx={{
                       bgcolor: "white",
                       borderRadius: 2,
@@ -305,8 +301,8 @@ export default function CreateGroupPage({ onBack, onCreate }) {
                     }}
                   >
                     <ListItemText
-                      primary={servicio.nombre}
-                      secondary={`Wallet: ${servicio.wallet.substring(
+                      primary={service.name}
+                      secondary={`Wallet: ${service.wallet.substring(
                         0,
                         20
                       )}...`}
@@ -314,7 +310,7 @@ export default function CreateGroupPage({ onBack, onCreate }) {
                     <ListItemSecondaryAction>
                       <IconButton
                         edge="end"
-                        onClick={() => handleRemoveServicio(servicio.id)}
+                        onClick={() => handleRemoveService(service.id)}
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -324,20 +320,23 @@ export default function CreateGroupPage({ onBack, onCreate }) {
               </List>
             )}
 
-            {/* Miembros */}
+            {/* Members */}
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-              Agregar miembros (opcional)
+              Add Members (optional)
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 2, color: "#666" }}>
+              You will be added as a member automatically
             </Typography>
 
             <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
               <TextField
                 fullWidth
-                placeholder="Email del miembro"
+                placeholder="Member email"
                 type="email"
-                value={miembroEmail}
-                onChange={(e) => setMiembroEmail(e.target.value)}
+                value={memberEmail}
+                onChange={(e) => setMemberEmail(e.target.value)}
                 onKeyPress={(e) =>
-                  e.key === "Enter" && (e.preventDefault(), handleAddMiembro())
+                  e.key === "Enter" && (e.preventDefault(), handleAddMember())
                 }
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -350,8 +349,8 @@ export default function CreateGroupPage({ onBack, onCreate }) {
               />
               <Button
                 variant="contained"
-                onClick={handleAddMiembro}
-                disabled={!miembroEmail.trim()}
+                onClick={handleAddMember}
+                disabled={!memberEmail.trim()}
                 sx={{
                   minWidth: "56px",
                   height: "56px",
@@ -364,13 +363,13 @@ export default function CreateGroupPage({ onBack, onCreate }) {
               </Button>
             </Box>
 
-            {miembros.length > 0 && (
+            {members.length > 0 && (
               <Box sx={{ mb: 3 }}>
-                {miembros.map((miembro) => (
+                {members.map((member) => (
                   <Chip
-                    key={miembro.id}
-                    label={miembro.email}
-                    onDelete={() => handleRemoveMiembro(miembro.id)}
+                    key={member.id}
+                    label={member.email}
+                    onDelete={() => handleRemoveMember(member.id)}
                     sx={{
                       mr: 1,
                       mb: 1,
@@ -384,7 +383,7 @@ export default function CreateGroupPage({ onBack, onCreate }) {
               </Box>
             )}
 
-            {/* Botones */}
+            {/* Buttons */}
             <Button
               fullWidth
               type="submit"
@@ -410,7 +409,7 @@ export default function CreateGroupPage({ onBack, onCreate }) {
                 },
               }}
             >
-              Crear Grupo
+              Create Group
             </Button>
 
             <Button
@@ -431,7 +430,7 @@ export default function CreateGroupPage({ onBack, onCreate }) {
                 },
               }}
             >
-              Cancelar
+              Cancel
             </Button>
           </form>
         </Box>

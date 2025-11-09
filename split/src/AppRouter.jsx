@@ -1,137 +1,293 @@
-import React, { useState } from 'react';
-import LoginPage from './components/auth/LoginPage';
-import MainPage from './pages/MainPage';
-import CreateGroupPage from './pages/CreateGroupPage';
-import GroupDetailPage from './pages/GroupDetailPage';
-import ProfilePage from './pages/ProfilePage';
+import React, { useState, useEffect } from "react";
+import LoginPage from "./components/auth/LoginPage";
+import MainPage from "./pages/MainPage";
+import CreateGroupPage from "./pages/CreateGroupPage";
+import GroupDetailPage from "./pages/GroupDetailPage";
+import ProfilePage from "./pages/ProfilePage";
+import apiService from "./services/api";
 
 function AppRouter() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentPage, setCurrentPage] = useState('main');
+  const [currentPage, setCurrentPage] = useState("main");
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [user, setUser] = useState(null);
-  
-  const [grupos, setGrupos] = useState([
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check for existing authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = apiService.getToken();
+      if (token) {
+        try {
+          const userData = await apiService.getCurrentUser();
+          setUser(userData);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error("Auth check failed:", error);
+          apiService.clearToken();
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  const [groups, setGroups] = useState([
     {
       id: 1,
-      nombre: 'Casa',
-      emoji: '🏠',
-      servicios: [
-        { id: 1, nombre: 'Luz', wallet: 'wallet-luz-123456789', total: 150.00, fechaVencimiento: '15/12/2024' },
-        { id: 2, nombre: 'Agua', wallet: 'wallet-agua-987654321', total: 80.00, fechaVencimiento: '20/12/2024' },
-        { id: 3, nombre: 'Netflix', wallet: 'wallet-netflix-456789123', total: 15.00, fechaVencimiento: '10/12/2024' },
+      name: "House",
+      emoji: "🏠",
+      creatorWallet: "$ilp.interledger-test.dev/creator-wallet",
+      services: [
+        {
+          id: 1,
+          name: "Electricity",
+          wallet: "$ilp.interledger-test.dev/electricity-wallet",
+          total: 150.0,
+          dueDate: "2024-12-15",
+        },
+        {
+          id: 2,
+          name: "Water",
+          wallet: "$ilp.interledger-test.dev/water-wallet",
+          total: 80.0,
+          dueDate: "2024-12-20",
+        },
+        {
+          id: 3,
+          name: "Netflix",
+          wallet: "$ilp.interledger-test.dev/netflix-wallet",
+          total: 15.0,
+          dueDate: "2024-12-10",
+        },
       ],
-      miembros: [
-        { id: 1, nombre: 'María García', email: 'maria@example.com', avatar: '🐱', estado: 'confirmado', pagado: true },
-        { id: 2, nombre: 'Juan Pérez', email: 'juan@example.com', avatar: '🐶', estado: 'confirmado', pagado: false },
+      members: [
+        {
+          id: 1,
+          name: "María García",
+          email: "maria@example.com",
+          avatar: "🐱",
+          status: "confirmed",
+          hasPaid: true,
+          wallet: "$ilp.interledger-test.dev/maria-wallet",
+        },
+        {
+          id: 2,
+          name: "Juan Pérez",
+          email: "juan@example.com",
+          avatar: "🐶",
+          status: "confirmed",
+          hasPaid: false,
+          wallet: "$ilp.interledger-test.dev/juan-wallet",
+        },
       ],
     },
     {
       id: 2,
-      nombre: 'Viaje',
-      emoji: '🏔️',
-      servicios: [],
-      miembros: [],
+      name: "Trip",
+      emoji: "🏔️",
+      creatorWallet: "$ilp.interledger-test.dev/creator-wallet",
+      services: [],
+      members: [],
     },
   ]);
 
-  const [solicitudes, setSolicitudes] = useState([
-    { id: 1, grupoId: 3, grupoNombre: 'Amigos', grupoEmoji: '🎉', invitadoPor: 'Pedro López' },
-    { id: 2, grupoId: 4, grupoNombre: 'Trabajo', grupoEmoji: '💼', invitadoPor: 'Ana Martínez' },
+  const [requests, setRequests] = useState([
+    {
+      id: 1,
+      groupId: 3,
+      groupName: "Friends",
+      groupEmoji: "🎉",
+      invitedBy: "Pedro López",
+    },
+    {
+      id: 2,
+      groupId: 4,
+      groupName: "Work",
+      groupEmoji: "💼",
+      invitedBy: "Ana Martínez",
+    },
   ]);
 
-  if (!isAuthenticated) {
-    return <LoginPage onLogin={(userData) => {
-      console.log('✅ Login exitoso:', userData);
+  const handleLogin = async (userData) => {
+    console.log("✅ Login successful:", userData);
+    setIsAuthenticated(true);
+    setUser(userData);
+  };
+
+  const handleSignup = async (userData) => {
+    try {
+      console.log("📝 Signing up:", userData);
+      const response = await apiService.signup(userData);
+      console.log("✅ Signup successful:", response);
       setIsAuthenticated(true);
-      setUser(userData);
-    }} />;
+      setUser(response.user || userData);
+    } catch (error) {
+      console.error("❌ Signup failed:", error);
+      throw error;
+    }
+  };
+
+  const handleLogout = () => {
+    console.log("👋 Logging out");
+    apiService.logout();
+    setIsAuthenticated(false);
+    setUser(null);
+    setCurrentPage("main");
+  };
+
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          backgroundColor: "#2a2a2a",
+        }}
+      >
+        <p style={{ color: "#fff" }}>Loading...</p>
+      </div>
+    );
   }
 
-  if (currentPage === 'create') {
-    return <CreateGroupPage
-      onBack={() => {
-        console.log('⬅️ Volviendo a main desde create');
-        setCurrentPage('main');
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={handleLogin} onSignup={handleSignup} />;
+  }
+
+  if (currentPage === "create") {
+    return (
+      <CreateGroupPage
+        user={user}
+        onBack={() => {
+          console.log("⬅️ Going back to main from create");
+          setCurrentPage("main");
+        }}
+        onCreate={(newGroup) => {
+          console.log("➕ Creating group:", newGroup);
+
+          // Add creator as first member with confirmed status
+          const groupWithCreator = {
+            id: Date.now(),
+            ...newGroup,
+            creatorWallet: user.wallet,
+            services: newGroup.services || [],
+            members: [
+              {
+                id: Date.now(),
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar,
+                status: "confirmed",
+                hasPaid: false,
+                wallet: user.wallet,
+              },
+              ...(newGroup.members || []).map((member, index) => ({
+                ...member,
+                id: Date.now() + index + 1,
+                status: "pending",
+                hasPaid: false,
+              })),
+            ],
+          };
+
+          setGroups([...groups, groupWithCreator]);
+          setCurrentPage("main");
+        }}
+      />
+    );
+  }
+
+  if (currentPage === "group-detail") {
+    return (
+      <GroupDetailPage
+        group={selectedGroup}
+        user={user}
+        onBack={() => {
+          console.log("⬅️ Going back to main from detail");
+          setCurrentPage("main");
+        }}
+        onNavigateToProfile={() => {
+          console.log("👤 Navigating to profile from group detail");
+          setCurrentPage("profile");
+        }}
+        onAddService={() => {
+          console.log("➕ Add service");
+        }}
+        onUpdateGroup={(updatedGroup) => {
+          console.log("🔄 Updating group:", updatedGroup);
+          setGroups(
+            groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g))
+          );
+          setSelectedGroup(updatedGroup);
+        }}
+        userWallet={user?.wallet}
+        userBalance={150.5}
+      />
+    );
+  }
+
+  if (currentPage === "profile") {
+    return (
+      <ProfilePage
+        user={user}
+        onNavigateToGroups={() => {
+          console.log("🏠 Navigating to groups from profile");
+          setCurrentPage("main");
+        }}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  return (
+    <MainPage
+      groups={groups}
+      requests={requests}
+      onNavigateToCreate={() => {
+        console.log("➕ Navigating to create group");
+        setCurrentPage("create");
       }}
-      onCreate={(newGroup) => {
-        console.log('➕ Creando grupo:', newGroup);
-        const grupo = {
-          id: Date.now(),
-          ...newGroup,
-          servicios: newGroup.servicios || [],
-          miembros: newGroup.miembros || [],
+      onNavigateToProfile={() => {
+        console.log("👤 Navigating to profile");
+        setCurrentPage("profile");
+      }}
+      onNavigateToGroup={(group) => {
+        console.log("🔍 Navigating to group detail:", group.name);
+        setSelectedGroup(group);
+        setCurrentPage("group-detail");
+      }}
+      onAcceptRequest={(request) => {
+        console.log("✅ Accepting request:", request.groupName);
+        const newGroup = {
+          id: request.groupId,
+          name: request.groupName,
+          emoji: request.groupEmoji,
+          creatorWallet: "$ilp.interledger-test.dev/unknown-wallet",
+          services: [],
+          members: [
+            {
+              id: Date.now(),
+              name: user.name,
+              email: user.email,
+              avatar: user.avatar,
+              status: "confirmed",
+              hasPaid: false,
+              wallet: user.wallet,
+            },
+          ],
         };
-        setGrupos([...grupos, grupo]);
-        setCurrentPage('main');
+        setGroups([...groups, newGroup]);
+        setRequests(requests.filter((r) => r.id !== request.id));
       }}
-    />;
-  }
-  
-  if (currentPage === 'group-detail') {
-    return <GroupDetailPage
-      grupo={selectedGroup}
-      onBack={() => {
-        console.log('⬅️ Volviendo a main desde detalle');
-        setCurrentPage('main');
+      onRejectRequest={(request) => {
+        console.log("❌ Rejecting request:", request.groupName);
+        setRequests(requests.filter((r) => r.id !== request.id));
       }}
-      onAddService={() => {
-        console.log('➕ Agregar servicio');
-      }}
-      userWallet={user?.wallet}
-      userBalance={150.50}
-    />;
-  }
-  
-  if (currentPage === 'profile') {
-    return <ProfilePage
-      user={user}
-      onNavigateToGroups={() => {
-        console.log('🏠 Navegando a grupos desde perfil');
-        setCurrentPage('main');
-      }}
-      onLogout={() => {
-        console.log('👋 Cerrando sesión');
-        setIsAuthenticated(false);
-        setUser(null);
-        setCurrentPage('main');
-      }}
-    />;
-  }
-  
-  return <MainPage
-    grupos={grupos}
-    solicitudes={solicitudes}
-    onNavigateToCreate={() => {
-      console.log('➕ Navegando a crear grupo');
-      setCurrentPage('create');
-    }}
-    onNavigateToProfile={() => {
-      console.log('👤 Navegando a perfil');
-      setCurrentPage('profile');
-    }}
-    onNavigateToGroup={(grupo) => {
-      console.log('🔍 Navegando a detalle del grupo:', grupo.nombre);
-      setSelectedGroup(grupo);
-      setCurrentPage('group-detail');
-    }}
-    onAcceptRequest={(solicitud) => {
-      console.log('✅ Aceptando solicitud:', solicitud.grupoNombre);
-      const nuevoGrupo = {
-        id: solicitud.grupoId,
-        nombre: solicitud.grupoNombre,
-        emoji: solicitud.grupoEmoji,
-        servicios: [],
-        miembros: [],
-      };
-      setGrupos([...grupos, nuevoGrupo]);
-      setSolicitudes(solicitudes.filter(s => s.id !== solicitud.id));
-    }}
-    onRejectRequest={(solicitud) => {
-      console.log('❌ Rechazando solicitud:', solicitud.grupoNombre);
-      setSolicitudes(solicitudes.filter(s => s.id !== solicitud.id));
-    }}
-  />;
+    />
+  );
 }
 
 export default AppRouter;

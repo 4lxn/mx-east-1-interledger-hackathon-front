@@ -35,10 +35,14 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
   const menuItems = [
     {
       icon: <SettingsIcon />,
-      text: "Configuración",
-      action: () => console.log("Configuración"),
+      text: "Settings",
+      action: () => console.log("Settings"),
     },
-    { icon: <HelpIcon />, text: "Ayuda", action: () => console.log("Ayuda") },
+    {
+      icon: <HelpIcon />,
+      text: "Help",
+      action: () => console.log("Help"),
+    },
   ];
 
   return (
@@ -87,7 +91,7 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
             </Box>
           </Box>
 
-          {/* Avatar y nombre */}
+          {/* Avatar and name */}
           <Box
             sx={{
               display: "flex",
@@ -120,7 +124,7 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
                 mb: 0.5,
               }}
             >
-              {user?.name || "Usuario"}
+              {user?.name || "User"}
             </Typography>
             <Typography
               variant="body2"
@@ -129,7 +133,7 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
                 mb: 2,
               }}
             >
-              {user?.email || "email@ejemplo.com"}
+              {user?.email || "email@example.com"}
             </Typography>
 
             {/* Wallet Card */}
@@ -165,7 +169,7 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
                         variant="subtitle2"
                         sx={{ fontWeight: 700, color: "#000" }}
                       >
-                        Mi Wallet
+                        My Wallet
                       </Typography>
                       <Typography
                         variant="body2"
@@ -176,7 +180,9 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
                           wordBreak: "break-all",
                         }}
                       >
-                        {user.wallet.substring(26, 49)}...
+                        {user.wallet.length > 50
+                          ? `${user.wallet.substring(0, 50)}...`
+                          : user.wallet}
                       </Typography>
                     </Box>
                   </Box>
@@ -187,7 +193,7 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
 
           <Divider sx={{ mb: 3 }} />
 
-          {/* Menú de opciones */}
+          {/* Menu options */}
           <List sx={{ mb: 3 }}>
             {menuItems.map((item, index) => (
               <ListItem
@@ -236,7 +242,7 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
 
           <Divider sx={{ mb: 3 }} />
 
-          {/* Botón de cerrar sesión */}
+          {/* Logout button */}
           <Button
             fullWidth
             startIcon={<LogoutIcon />}
@@ -257,7 +263,7 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
               },
             }}
           >
-            Cerrar Sesión
+            Sign Out
           </Button>
         </Box>
       </Container>
