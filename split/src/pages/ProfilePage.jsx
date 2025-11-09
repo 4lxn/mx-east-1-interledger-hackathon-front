@@ -12,6 +12,8 @@ import {
   Divider,
   BottomNavigation,
   BottomNavigationAction,
+  Card,
+  CardContent,
 } from '@mui/material';
 import {
   Group as GroupIcon,
@@ -20,6 +22,7 @@ import {
   Help as HelpIcon,
   Logout as LogoutIcon,
   MonetizationOn,
+  AccountBalanceWallet as WalletIcon,
 } from '@mui/icons-material';
 
 export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
@@ -27,7 +30,7 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
 
   const handleNavigationChange = (event, newValue) => {
     setNavigationValue(newValue);
-    if (newValue === 0) {
+    if (newValue === 0 && onNavigateToGroups) {
       onNavigateToGroups();
     }
   };
@@ -45,19 +48,7 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
         pb: 8,
       }}
     >
-      {/* Header */}
-      <Box
-        sx={{
-          bgcolor: '#2a2a2a',
-          pt: 3,
-          pb: 2,
-          px: 3,
-        }}
-      >
-      </Box>
-
-      {/* Main Content */}
-      <Container maxWidth="sm" sx={{ px: 3 }}>
+      <Container maxWidth="sm" sx={{ px: 3, pt: 3 }}>
         <Box
           sx={{
             bgcolor: 'white',
@@ -93,14 +84,14 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
           >
             <Avatar
               sx={{
-                width: 100,
-                height: 100,
-                bgcolor: '#ffd700',
-                fontSize: '3rem',
+                width: 120,
+                height: 120,
+                bgcolor: '#f4d56f',
+                fontSize: '4rem',
                 mb: 2,
               }}
             >
-              👨🏻‍💻
+              {user?.avatar || '👤'}
             </Avatar>
             <Typography
               variant="h5"
@@ -115,10 +106,44 @@ export default function ProfilePage({ user, onNavigateToGroups, onLogout }) {
               variant="body2"
               sx={{
                 color: '#666',
+                mb: 2,
               }}
             >
               {user?.email || 'email@ejemplo.com'}
             </Typography>
+
+            {/* Wallet Card */}
+            {user?.wallet && (
+              <Card
+                sx={{
+                  width: '100%',
+                  bgcolor: '#f5f5f5',
+                  borderRadius: 3,
+                  boxShadow: 'none',
+                  mt: 2,
+                }}
+              >
+                <CardContent sx={{ py: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <WalletIcon sx={{ color: '#ffd700', mr: 1 }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      Mi Wallet
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: '#666',
+                      fontFamily: 'monospace',
+                      fontSize: '0.85rem',
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    {user.wallet}
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
           </Box>
 
           <Divider sx={{ mb: 2 }} />

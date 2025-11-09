@@ -8,8 +8,14 @@ import {
   IconButton,
   InputAdornment,
   Alert,
+  Grid,
 } from '@mui/material';
 import { Visibility, VisibilityOff, MonetizationOn } from '@mui/icons-material';
+
+const avatarOptions = [
+  '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
+  '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔',
+];
 
 export default function LoginPage({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,7 +24,9 @@ export default function LoginPage({ onLogin }) {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    wallet: '',
+    avatar: '🐶'
   });
   const [error, setError] = useState('');
 
@@ -35,21 +43,27 @@ export default function LoginPage({ onLogin }) {
     e.preventDefault();
     setError('');
 
-    // Validaciones básicas
     if (!formData.email || !formData.password) {
       setError('Por favor completa todos los campos');
       return;
     }
 
-    if (!isLogin && formData.password !== formData.confirmPassword) {
-      setError('Las contraseñas no coinciden');
-      return;
+    if (!isLogin) {
+      if (!formData.wallet) {
+        setError('Por favor ingresa tu dirección de wallet');
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setError('Las contraseñas no coinciden');
+        return;
+      }
     }
 
-    // Simular autenticación exitosa
     const userData = {
       email: formData.email,
       name: formData.name || formData.email.split('@')[0],
+      wallet: formData.wallet,
+      avatar: formData.avatar,
     };
 
     if (onLogin) {
@@ -64,7 +78,9 @@ export default function LoginPage({ onLogin }) {
       name: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      wallet: '',
+      avatar: '🐶'
     });
   };
 
@@ -75,7 +91,8 @@ export default function LoginPage({ onLogin }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: '#2a2a2a'
+        bgcolor: '#2a2a2a',
+        py: 4,
       }}
     >
       <Container maxWidth="sm">
@@ -84,7 +101,9 @@ export default function LoginPage({ onLogin }) {
             bgcolor: 'white',
             borderRadius: 3,
             p: 6,
-            position: 'relative'
+            position: 'relative',
+            maxHeight: '90vh',
+            overflowY: 'auto',
           }}
         >
           <Box
@@ -113,8 +132,8 @@ export default function LoginPage({ onLogin }) {
 
             <Box
               sx={{
-                width: 280,
-                height: 280,
+                width: 200,
+                height: 200,
                 bgcolor: '#f4d56f',
                 borderRadius: '50%',
                 display: 'flex',
@@ -124,7 +143,9 @@ export default function LoginPage({ onLogin }) {
                 overflow: 'hidden'
               }}
             >
-              <Typography sx={{ fontSize: '10rem' }}>👨🏻‍💻</Typography>
+              <Typography sx={{ fontSize: '8rem' }}>
+                {!isLogin ? formData.avatar : '👨🏻‍💻'}
+              </Typography>
             </Box>
           </Box>
 
@@ -136,22 +157,77 @@ export default function LoginPage({ onLogin }) {
 
           <Box component="form" onSubmit={handleSubmit}>
             {!isLogin && (
-              <TextField
-                fullWidth
-                placeholder="Nombre completo"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                sx={{
-                  mb: 2,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 3,
-                    bgcolor: '#f5f5f5',
-                    '& fieldset': { border: 'none' },
-                    height: '56px'
-                  }
-                }}
-              />
+              <>
+                <TextField
+                  fullWidth
+                  placeholder="Nombre completo"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  sx={{
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 3,
+                      bgcolor: '#f5f5f5',
+                      '& fieldset': { border: 'none' },
+                      height: '56px'
+                    }
+                  }}
+                />
+
+                <TextField
+                  fullWidth
+                  placeholder="Dirección de Wallet"
+                  name="wallet"
+                  value={formData.wallet}
+                  onChange={handleChange}
+                  sx={{
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 3,
+                      bgcolor: '#f5f5f5',
+                      '& fieldset': { border: 'none' },
+                      height: '56px'
+                    }
+                  }}
+                />
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mb: 1,
+                    fontWeight: 600,
+                    color: '#666',
+                  }}
+                >
+                  Elige tu avatar
+                </Typography>
+
+                <Grid container spacing={1} sx={{ mb: 3 }}>
+                  {avatarOptions.map((avatar) => (
+                    <Grid item xs={3} key={avatar}>
+                      <Box
+                        onClick={() => setFormData(prev => ({ ...prev, avatar }))}
+                        sx={{
+                          bgcolor: formData.avatar === avatar ? '#ffd700' : '#f5f5f5',
+                          borderRadius: 2,
+                          p: 1.5,
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          border: formData.avatar === avatar ? '2px solid #000' : '2px solid transparent',
+                          '&:hover': {
+                            bgcolor: formData.avatar === avatar ? '#ffd700' : '#e8e8e8',
+                            transform: 'scale(1.05)',
+                          },
+                        }}
+                      >
+                        <Typography sx={{ fontSize: '2rem' }}>{avatar}</Typography>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </>
             )}
 
             <TextField

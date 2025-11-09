@@ -7,8 +7,18 @@ import {
   Typography,
   IconButton,
   Grid,
+  Chip,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
 } from '@mui/material';
-import { ArrowBack, MonetizationOn } from '@mui/icons-material';
+import { 
+  ArrowBack, 
+  MonetizationOn, 
+  Delete as DeleteIcon,
+  Add as AddIcon,
+} from '@mui/icons-material';
 
 const emojiOptions = [
   '🏠', '🏔️', '✈️', '🎉', '🍕', '🎮', '📚', '🏋️',
@@ -18,6 +28,54 @@ const emojiOptions = [
 export default function CreateGroupPage({ onBack, onCreate }) {
   const [groupName, setGroupName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState('🏠');
+  
+  // Servicios
+  const [servicios, setServicios] = useState([]);
+  const [servicioNombre, setServicioNombre] = useState('');
+  const [servicioWallet, setServicioWallet] = useState('');
+  
+  // Miembros
+  const [miembros, setMiembros] = useState([]);
+  const [miembroEmail, setMiembroEmail] = useState('');
+
+  const handleAddServicio = () => {
+    if (servicioNombre.trim() && servicioWallet.trim() && servicios.length < 10) {
+      setServicios([
+        ...servicios,
+        {
+          id: Date.now(),
+          nombre: servicioNombre,
+          wallet: servicioWallet,
+        }
+      ]);
+      setServicioNombre('');
+      setServicioWallet('');
+    }
+  };
+
+  const handleRemoveServicio = (id) => {
+    setServicios(servicios.filter(s => s.id !== id));
+  };
+
+  const handleAddMiembro = () => {
+    if (miembroEmail.trim() && /\S+@\S+\.\S+/.test(miembroEmail)) {
+      if (!miembros.find(m => m.email === miembroEmail)) {
+        setMiembros([
+          ...miembros,
+          {
+            id: Date.now(),
+            email: miembroEmail,
+            estado: 'pendiente',
+          }
+        ]);
+        setMiembroEmail('');
+      }
+    }
+  };
+
+  const handleRemoveMiembro = (id) => {
+    setMiembros(miembros.filter(m => m.id !== id));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -25,6 +83,8 @@ export default function CreateGroupPage({ onBack, onCreate }) {
       onCreate({
         nombre: groupName,
         emoji: selectedEmoji,
+        servicios,
+        miembros,
       });
     }
   };
@@ -57,7 +117,15 @@ export default function CreateGroupPage({ onBack, onCreate }) {
         >
           <ArrowBack />
         </IconButton>
-       
+        <Typography
+          variant="h6"
+          sx={{
+            color: '#888',
+            fontWeight: 400,
+          }}
+        >
+          Crear Grupo
+        </Typography>
       </Box>
 
       {/* Main Content */}
@@ -67,6 +135,8 @@ export default function CreateGroupPage({ onBack, onCreate }) {
             bgcolor: 'white',
             borderRadius: 3,
             p: 4,
+            maxHeight: 'calc(100vh - 120px)',
+            overflowY: 'auto',
           }}
         >
           {/* Money Icon */}
@@ -87,16 +157,9 @@ export default function CreateGroupPage({ onBack, onCreate }) {
 
           <form onSubmit={handleSubmit}>
             {/* Nombre del grupo */}
-            <Typography
-              variant="h6"
-              sx={{
-                mb: 2,
-                fontWeight: 600,
-              }}
-            >
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Nombre del grupo
             </Typography>
-
             <TextField
               fullWidth
               placeholder="Ej: Casa, Viaje, Amigos..."
@@ -114,16 +177,9 @@ export default function CreateGroupPage({ onBack, onCreate }) {
             />
 
             {/* Seleccionar emoji */}
-            <Typography
-              variant="h6"
-              sx={{
-                mb: 2,
-                fontWeight: 600,
-              }}
-            >
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               Elige un ícono
             </Typography>
-
             <Grid container spacing={1.5} sx={{ mb: 4 }}>
               {emojiOptions.map((emoji) => (
                 <Grid item xs={3} key={emoji}>
@@ -150,22 +206,20 @@ export default function CreateGroupPage({ onBack, onCreate }) {
             </Grid>
 
             {/* Servicios */}
-            <Typography
-              variant="h6"
-              sx={{
-                mb: 2,
-                fontWeight: 600,
-              }}
-            >
-              Agregar servicios
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+              Agregar servicios (opcional)
             </Typography>
+            <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
+              Máximo 10 servicios
+            </Typography>
+
             <TextField
               fullWidth
-              placeholder="Ej: Luz, Agua, Netflix..."
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Nombre del servicio (Ej: Luz, Agua, Netflix)"
+              value={servicioNombre}
+              onChange={(e) => setServicioNombre(e.target.value)}
               sx={{
-                mb: 4,
+                mb: 2,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 3,
                   bgcolor: '#f5f5f5',
@@ -174,34 +228,124 @@ export default function CreateGroupPage({ onBack, onCreate }) {
                 },
               }}
             />
+
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField
+                fullWidth
+                placeholder="Wallet del servicio"
+                value={servicioWallet}
+                onChange={(e) => setServicioWallet(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    bgcolor: '#f5f5f5',
+                    '& fieldset': { border: 'none' },
+                    height: '56px',
+                  },
+                }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleAddServicio}
+                disabled={!servicioNombre.trim() || !servicioWallet.trim() || servicios.length >= 10}
+                sx={{
+                  minWidth: '56px',
+                  height: '56px',
+                  borderRadius: 3,
+                  bgcolor: '#000',
+                  '&:hover': { bgcolor: '#333' },
+                }}
+              >
+                <AddIcon />
+              </Button>
+            </Box>
+
+            {servicios.length > 0 && (
+              <List sx={{ bgcolor: '#f5f5f5', borderRadius: 2, mb: 3, p: 1 }}>
+                {servicios.map((servicio) => (
+                  <ListItem
+                    key={servicio.id}
+                    sx={{
+                      bgcolor: 'white',
+                      borderRadius: 2,
+                      mb: 1,
+                      '&:last-child': { mb: 0 },
+                    }}
+                  >
+                    <ListItemText
+                      primary={servicio.nombre}
+                      secondary={`Wallet: ${servicio.wallet.substring(0, 20)}...`}
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton
+                        edge="end"
+                        onClick={() => handleRemoveServicio(servicio.id)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+              </List>
+            )}
 
             {/* Miembros */}
-            <Typography
-              variant="h6"
-              sx={{
-                mb: 2,
-                fontWeight: 600,
-              }}
-            >
-              Agregar miembros
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+              Agregar miembros (opcional)
             </Typography>
 
-            <TextField
-              fullWidth
-              placeholder="Ej: usuario@dominio.com"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              sx={{
-                mb: 4,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 3,
-                  bgcolor: '#f5f5f5',
-                  '& fieldset': { border: 'none' },
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField
+                fullWidth
+                placeholder="Email del miembro"
+                type="email"
+                value={miembroEmail}
+                onChange={(e) => setMiembroEmail(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddMiembro())}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    bgcolor: '#f5f5f5',
+                    '& fieldset': { border: 'none' },
+                    height: '56px',
+                  },
+                }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleAddMiembro}
+                disabled={!miembroEmail.trim()}
+                sx={{
+                  minWidth: '56px',
                   height: '56px',
-                },
-              }}
-            />
+                  borderRadius: 3,
+                  bgcolor: '#000',
+                  '&:hover': { bgcolor: '#333' },
+                }}
+              >
+                <AddIcon />
+              </Button>
+            </Box>
 
+            {miembros.length > 0 && (
+              <Box sx={{ mb: 3 }}>
+                {miembros.map((miembro) => (
+                  <Chip
+                    key={miembro.id}
+                    label={miembro.email}
+                    onDelete={() => handleRemoveMiembro(miembro.id)}
+                    sx={{
+                      mr: 1,
+                      mb: 1,
+                      bgcolor: '#fff3cd',
+                      '& .MuiChip-deleteIcon': {
+                        color: '#666',
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
 
             {/* Botones */}
             <Button
